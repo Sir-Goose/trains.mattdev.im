@@ -4,11 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="60874311-3ad7-45f4-bd35-38c5446f0e8b" name="Changes" comment="Initial manual commit!">
-      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/board.py" afterDir="false" />
+    <list default="true" id="60874311-3ad7-45f4-bd35-38c5446f0e8b" name="Changes" comment="basic data request worked out">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/board.py" beforeDir="false" afterPath="$PROJECT_DIR$/board.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -80,7 +78,7 @@
       <option name="presentableId" value="Default" />
       <updated>1767890830548</updated>
       <workItem from="1767891038783" duration="625000" />
-      <workItem from="1767951041733" duration="4388000" />
+      <workItem from="1767951041733" duration="6293000" />
     </task>
     <task id="LOCAL-00001" summary="Initial manual commit!">
       <option name="closed" value="true" />
@@ -90,7 +88,15 @@
       <option name="project" value="LOCAL" />
       <updated>1767890950862</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="basic data request worked out">
+      <option name="closed" value="true" />
+      <created>1767955621798</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1767955621798</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -98,10 +104,11 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Initial manual commit!" />
-    <option name="LAST_COMMIT_MESSAGE" value="Initial manual commit!" />
+    <MESSAGE value="basic data request worked out" />
+    <option name="LAST_COMMIT_MESSAGE" value="basic data request worked out" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/LeatherheadLive$main.coverage" NAME="main Coverage Results" MODIFIED="1767954127242" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/LeatherheadLive$board.coverage" NAME="board Coverage Results" MODIFIED="1767954997246" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/LeatherheadLive$board.coverage" NAME="board Coverage Results" MODIFIED="1767955598883" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
