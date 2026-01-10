@@ -22,8 +22,20 @@ def get_data():
     if response.status_code == 200:
         data = response.json()
         print(data)
+        return data
     else:
         print(f'Error: {response.status_code} - {response.text}')
+
+def fill_board():
+    data = get_data()
+    new_board = Board()
+    for train in data['trainServices']:
+        print(train)
+        departure_train = DepartureTrain()
+        departure_train.scheduled_departure_time = train['']
+        departure_train.expected_departure_time = train['']
+        departure_train.platform = train['']
+
 
 class Board():
     departures = []
@@ -41,3 +53,7 @@ class ArrivalTrain:
     expected_arrival_time = None
     platform = None
     status = None
+
+if __name__ == '__main__':
+    #get_data()
+    fill_board()
