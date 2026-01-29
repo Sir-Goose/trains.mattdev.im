@@ -4,9 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="60874311-3ad7-45f4-bd35-38c5446f0e8b" name="Changes" comment="basic data structure planning">
+    <list default="true" id="60874311-3ad7-45f4-bd35-38c5446f0e8b" name="Changes" comment="Filling the board">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/board.py" beforeDir="false" afterPath="$PROJECT_DIR$/board.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -65,8 +64,8 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-js-predefined-d6986cc7102b-9b0f141eb926-JavaScript-PY-253.29346.142" />
-        <option value="bundled-python-sdk-f2b7a9f6281b-6e1f45a539f7-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-253.29346.142" />
+        <option value="bundled-js-predefined-d6986cc7102b-9b0f141eb926-JavaScript-PY-253.30387.127" />
+        <option value="bundled-python-sdk-3944b0c99280-6d6dccd035ac-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-253.30387.127" />
       </set>
     </attachedChunks>
   </component>
@@ -79,7 +78,11 @@
       <updated>1767890830548</updated>
       <workItem from="1767891038783" duration="625000" />
       <workItem from="1767951041733" duration="6953000" />
-      <workItem from="1767985817137" duration="4718000" />
+      <workItem from="1767985817137" duration="6060000" />
+      <workItem from="1768133444576" duration="253000" />
+      <workItem from="1769373069691" duration="236000" />
+      <workItem from="1769373324279" duration="1202000" />
+      <workItem from="1769706843350" duration="354000" />
     </task>
     <task id="LOCAL-00001" summary="Initial manual commit!">
       <option name="closed" value="true" />
@@ -105,7 +108,15 @@
       <option name="project" value="LOCAL" />
       <updated>1767957735878</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="Filling the board">
+      <option name="closed" value="true" />
+      <created>1768051492129</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1768051492129</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -115,10 +126,11 @@
     <MESSAGE value="Initial manual commit!" />
     <MESSAGE value="basic data request worked out" />
     <MESSAGE value="basic data structure planning" />
-    <option name="LAST_COMMIT_MESSAGE" value="basic data structure planning" />
+    <MESSAGE value="Filling the board" />
+    <option name="LAST_COMMIT_MESSAGE" value="Filling the board" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/LeatherheadLive$main.coverage" NAME="main Coverage Results" MODIFIED="1767954127242" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/LeatherheadLive$board.coverage" NAME="board Coverage Results" MODIFIED="1768039996625" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/LeatherheadLive$board.coverage" NAME="board Coverage Results" MODIFIED="1769706848711" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

@@ -28,13 +28,38 @@ def get_data():
 
 def fill_board():
     data = get_data()
+    
+    # Error handling: check if data exists and has trainServices
+    if not data or 'trainServices' not in data:
+        return None
+    
     new_board = Board()
+    
     for train in data['trainServices']:
         print(train)
         departure_train = DepartureTrain()
-        departure_train.scheduled_departure_time = train['']
-        departure_train.expected_departure_time = train['']
-        departure_train.platform = train['']
+        
+        # Basic departure information
+        departure_train.scheduled_departure_time = train.get('std')
+        departure_train.expected_departure_time = train.get('etd')
+        departure_train.platform = train.get('platform', 'TBC')
+        departure_train.status = train.get('etd')
+        
+        # Origin and destination information
+        if train.get('origin') and len(train['origin']) > 0:
+            departure_train.origin = train['origin'][0].get('locationName')
+        
+        if train.get('destination') and len(train['destination']) > 0:
+            departure_train.destination = train['destination'][0].get('locationName')
+        
+        # Operator and cancellation information
+        departure_train.operator = train.get('operator')
+        departure_train.is_cancelled = train.get('isCancelled', False)
+        
+        # Add train to board's departures list
+        new_board.departures.append(departure_train)
+    
+    return new_board
 
 
 class Board():
@@ -46,6 +71,10 @@ class DepartureTrain:
     expected_departure_time = None
     platform = None
     status = None
+    origin = None
+    destination = None
+    operator = None
+    is_cancelled = None
 
 
 class ArrivalTrain:
