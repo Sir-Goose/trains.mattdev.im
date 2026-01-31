@@ -1,0 +1,20 @@
+# FastAPI and ASGI server
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+
+# HTTP client (async replacement for requests)
+httpx==0.28.1
+
+# Data validation and settings management
+pydantic==2.10.5
+pydantic-settings==2.7.1
+
+# Environment variables
+python-dotenv==1.0.1
+
+# Existing dependencies
+requests==2.32.5
+certifi==2026.1.4
+charset-normalizer==3.4.4
+idna==3.11
+urllib3==2.6.3
