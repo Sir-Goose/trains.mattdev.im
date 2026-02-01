@@ -124,7 +124,7 @@ async def board_view(request: Request, crs: str, view: str):
 async def board_content(request: Request, crs: str, view: str):
     """
     HTMX endpoint for tab switching
-    Returns just the table partial
+    Returns tabs (with updated active state) + board content wrapper via OOB swap
     """
     crs = validate_crs(crs)
     
@@ -133,15 +133,25 @@ async def board_content(request: Request, crs: str, view: str):
     
     trains, station_name, error = await get_board_data(crs, view)
     
-    return templates.TemplateResponse(
-        f"partials/{view}_table.html",
-        {
-            "request": request,
-            "trains": trains,
-            "error": error,
-            "timestamp": get_timestamp()
-        }
+    # Render tabs with updated active state
+    tabs_html = templates.get_template("partials/tabs.html").render(
+        crs=crs,
+        view=view
     )
+    
+    # Render board content wrapper (with correct hx-get URL for this view)
+    board_content_html = templates.get_template("partials/board_content.html").render(
+        request=request,
+        crs=crs,
+        view=view,
+        trains=trains,
+        error=error,
+        timestamp=get_timestamp()
+    )
+    
+    # Return tabs + board-content (both with hx-swap-oob="true")
+    # HTMX will swap both #tabs and #board-content divs
+    return HTMLResponse(content=tabs_html + board_content_html)
 
 
 @router.get("/board/{crs}/{view}/refresh", response_class=HTMLResponse)

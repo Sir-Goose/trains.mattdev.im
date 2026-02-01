@@ -1,0 +1,6 @@
+<div id="board-content" hx-swap-oob="true"
+     hx-get="/board/{{ crs }}/{{ view }}/refresh"
+     hx-trigger="every 60s"
+     hx-swap="innerHTML">
+    {% include 'partials/' + view + '_table.html' %}
+</div>
