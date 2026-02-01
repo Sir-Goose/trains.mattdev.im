@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leatherhead Live - Train Board</title>
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #1a1a1a;
+            --bg-tertiary: #2a2a2a;
+            --text-primary: #f5f5f5;
+            --text-secondary: #a0a0a0;
+            --border: #333;
+            --accent: #3b82f6;
+            --success: #22c55e;
+            --warning: #eab308;
+            --danger: #ef4444;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+            width: 100%;
+            flex: 1;
+        }
+        
+        .header {
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .header h1 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        
+        .station-name {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .tab {
+            padding: 0.75rem 1.5rem;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.9375rem;
+            font-weight: 500;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        
+        .tab:hover {
+            color: var(--text-primary);
+            background: var(--bg-secondary);
+        }
+        
+        .tab.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        thead {
+            background: var(--bg-tertiary);
+        }
+        
+        th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border);
+        }
+        
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        tr:last-child td {
+            border-bottom: none;
+        }
+        
+        tbody tr {
+            transition: background 0.15s;
+        }
+        
+        tbody tr:hover {
+            background: var(--bg-tertiary);
+        }
+        
+        .status-ontime {
+            color: var(--success);
+            font-weight: 500;
+        }
+        
+        .status-delayed {
+            color: var(--warning);
+            font-weight: 500;
+        }
+        
+        .status-cancelled {
+            color: var(--danger);
+            font-weight: 500;
+        }
+        
+        tr.status-cancelled {
+            background: rgba(239, 68, 68, 0.1);
+        }
+        
+        .platform {
+            display: inline-block;
+            background: var(--bg-tertiary);
+            padding: 0.25rem 0.625rem;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            border: 1px solid var(--border);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-secondary);
+        }
+        
+        .empty-state svg {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+        
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--danger);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            color: var(--danger);
+        }
+        
+        .footer {
+            border-top: 1px solid var(--border);
+            padding: 1rem;
+            margin-top: 2rem;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+        
+        .timestamp {
+            font-family: 'Courier New', monospace;
+        }
+        
+        .station-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .station-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-decoration: none;
+            color: var(--text-primary);
+            transition: all 0.2s;
+            display: block;
+        }
+        
+        .station-card:hover {
+            border-color: var(--accent);
+            background: var(--bg-tertiary);
+            transform: translateY(-2px);
+        }
+        
+        .station-card h3 {
+            font-size: 1.125rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .station-card .crs {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .search-box {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .search-box h2 {
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        input[type="text"] {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        
+        button {
+            padding: 0.75rem 1.5rem;
+            background: var(--accent);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        button:hover {
+            background: #2563eb;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 0.75rem;
+            }
+            
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .tabs {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            .tab {
+                padding: 0.625rem 1rem;
+                font-size: 0.875rem;
+                white-space: nowrap;
+            }
+            
+            th, td {
+                padding: 0.75rem 0.5rem;
+                font-size: 0.875rem;
+            }
+            
+            .hide-mobile {
+                display: none;
+            }
+            
+            .station-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+        }
+        
+        @media (max-width: 375px) {
+            .hide-small {
+                display: none;
+            }
+        }
+    </style>
+    <script src="https://unpkg.com/htmx.org@1.9.10" 
+            integrity="sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC" 
+            crossorigin="anonymous"></script>
+</head>
+<body>
+    {% block content %}{% endblock %}
+    
+    <footer class="footer">
+        {% block footer %}
+        <div class="timestamp">Updated at: <span id="update-time">{{ timestamp }}</span></div>
+        {% endblock %}
+    </footer>
+</body>
+</html>

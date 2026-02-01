@@ -1,0 +1,58 @@
+{% if error %}
+<div class="error-message">
+    ⚠️ Unable to fetch live data. Showing last available information.
+</div>
+{% endif %}
+
+{% if trains|length == 0 %}
+<div class="empty-state">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    <p>No trains passing through</p>
+</div>
+{% else %}
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Arrives</th>
+                <th>Departs</th>
+                <th>Origin → Destination</th>
+                <th>Platform</th>
+                <th class="hide-small">Status</th>
+                <th class="hide-mobile">Operator</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for train in trains %}
+            <tr {% if train.is_cancelled %}class="status-cancelled"{% endif %}>
+                <td><strong>{{ train.scheduled_arrival_time }}</strong></td>
+                <td><strong>{{ train.scheduled_departure_time }}</strong></td>
+                <td>
+                    <div>{{ train.origin_name }} → {{ train.destination_name }}</div>
+                    {% if train.destination_via %}
+                    <div style="font-size: 0.75rem; color: var(--text-secondary);">via {{ train.destination_via }}</div>
+                    {% endif %}
+                </td>
+                <td><span class="platform">{{ train.platform or 'TBC' }}</span></td>
+                <td class="hide-small">
+                    {% if train.is_cancelled %}
+                    <span class="status-cancelled">Cancelled</span>
+                    {% elif train.estimated_departure_time == 'On time' %}
+                    <span class="status-ontime">On time</span>
+                    {% else %}
+                    <span class="status-delayed">{{ train.estimated_departure_time }}</span>
+                    {% endif %}
+                </td>
+                <td class="hide-mobile">{{ train.operator }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<script>
+    document.getElementById('update-time').textContent = '{{ timestamp }}';
+</script>

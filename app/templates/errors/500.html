@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div style="text-align: center; padding: 4rem 1rem;">
+        <h1 style="font-size: 3rem; margin-bottom: 1rem;">500</h1>
+        <p style="font-size: 1.25rem; color: var(--text-secondary); margin-bottom: 2rem;">
+            Server Error
+        </p>
+        <p style="margin-bottom: 2rem; color: var(--text-secondary);">
+            Something went wrong on our end. Please try again later.
+        </p>
+        <a href="/" style="display: inline-block; padding: 0.75rem 1.5rem; background: var(--accent); color: white; text-decoration: none; border-radius: 6px;">
+            Back to Home
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer %}
+<div class="timestamp">Leatherhead Live &copy; 2026</div>
+{% endblock %}

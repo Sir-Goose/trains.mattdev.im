@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="header">
+        <h1>{{ station_name }}</h1>
+        <p class="station-name">{{ crs }} • Live Board</p>
+    </div>
+    
+    <div class="tabs">
+        <button class="tab {% if view == 'departures' %}active{% endif %}"
+                hx-get="/board/{{ crs }}/departures/content"
+                hx-target="#board-content"
+                hx-swap="innerHTML"
+                hx-push-url="/board/{{ crs }}/departures">
+            Departures
+        </button>
+        <button class="tab {% if view == 'arrivals' %}active{% endif %}"
+                hx-get="/board/{{ crs }}/arrivals/content"
+                hx-target="#board-content"
+                hx-swap="innerHTML"
+                hx-push-url="/board/{{ crs }}/arrivals">
+            Arrivals
+        </button>
+        <button class="tab {% if view == 'passing' %}active{% endif %}"
+                hx-get="/board/{{ crs }}/passing/content"
+                hx-target="#board-content"
+                hx-swap="innerHTML"
+                hx-push-url="/board/{{ crs }}/passing">
+            Passing Through
+        </button>
+    </div>
+    
+    <div id="board-content"
+         hx-get="/board/{{ crs }}/{{ view }}/refresh"
+         hx-trigger="every 60s"
+         hx-swap="innerHTML">
+        {% include 'partials/' + view + '_table.html' %}
+    </div>
+</div>
+{% endblock %}

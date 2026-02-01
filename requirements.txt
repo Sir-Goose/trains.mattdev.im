@@ -2,6 +2,9 @@
 fastapi==0.115.6
 uvicorn[standard]==0.34.0
 
+# Templates
+jinja2==3.1.6
+
 # HTTP client (async replacement for requests)
 httpx==0.28.1
 

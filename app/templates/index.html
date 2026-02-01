@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="header">
+        <h1>Leatherhead Live</h1>
+        <p class="station-name">UK Train Departure Boards</p>
+    </div>
+    
+    <div class="search-box">
+        <h2>Find a Station</h2>
+        <form action="/board" method="get">
+            <div class="input-group">
+                <input type="text" 
+                       name="crs" 
+                       placeholder="Enter CRS code (e.g., LHD, WAT, VIC)" 
+                       maxlength="3"
+                       pattern="[A-Za-z]{3}"
+                       required>
+                <button type="submit">View Board</button>
+            </div>
+        </form>
+    </div>
+    
+    <h2 style="margin-bottom: 1rem;">Common Stations</h2>
+    <div class="station-grid">
+        <a href="/board/LHD/departures" class="station-card">
+            <h3>Leatherhead</h3>
+            <div class="crs">LHD</div>
+        </a>
+        <a href="/board/WAT/departures" class="station-card">
+            <h3>London Waterloo</h3>
+            <div class="crs">WAT</div>
+        </a>
+        <a href="/board/VIC/departures" class="station-card">
+            <h3>London Victoria</h3>
+            <div class="crs">VIC</div>
+        </a>
+        <a href="/board/PAD/departures" class="station-card">
+            <h3>London Paddington</h3>
+            <div class="crs">PAD</div>
+        </a>
+        <a href="/board/KGX/departures" class="station-card">
+            <h3>London King's Cross</h3>
+            <div class="crs">KGX</div>
+        </a>
+        <a href="/board/LST/departures" class="station-card">
+            <h3>London Liverpool St</h3>
+            <div class="crs">LST</div>
+        </a>
+        <a href="/board/EUS/departures" class="station-card">
+            <h3>London Euston</h3>
+            <div class="crs">EUS</div>
+        </a>
+        <a href="/board/STP/departures" class="station-card">
+            <h3>London St Pancras</h3>
+            <div class="crs">STP</div>
+        </a>
+        <a href="/board/CHX/departures" class="station-card">
+            <h3>London Charing Cross</h3>
+            <div class="crs">CHX</div>
+        </a>
+        <a href="/board/CST/departures" class="station-card">
+            <h3>London Cannon Street</h3>
+            <div class="crs">CST</div>
+        </a>
+        <a href="/board/LBG/departures" class="station-card">
+            <h3>London Bridge</h3>
+            <div class="crs">LBG</div>
+        </a>
+        <a href="/board/MYB/departures" class="station-card">
+            <h3>London Marylebone</h3>
+            <div class="crs">MYB</div>
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer %}
+<div class="timestamp">Leatherhead Live &copy; 2026</div>
+{% endblock %}

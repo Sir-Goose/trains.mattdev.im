@@ -1,8 +1,9 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.templating import Jinja2Templates
 from app.config import settings
-from app.routers import boards
+from app.routers import boards, pages
 
 
 # Create FastAPI application
@@ -13,6 +14,9 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc"
 )
+
+# Configure Jinja2 templates
+templates = Jinja2Templates(directory="app/templates")
 
 
 # Configure CORS
@@ -26,20 +30,45 @@ app.add_middleware(
 
 
 # Include routers
-app.include_router(boards.router)
+app.include_router(boards.router)  # JSON API routes
+app.include_router(pages.router)   # HTML template routes
 
 
-# Root endpoint
-@app.get("/", tags=["root"])
-async def root():
-    """Root endpoint with API information"""
-    return {
-        "name": settings.app_name,
-        "version": settings.app_version,
-        "status": "online",
-        "docs": "/docs",
-        "health": "/api/health"
-    }
+# Custom 404 handler
+@app.exception_handler(404)
+async def not_found_handler(request: Request, exc: HTTPException):
+    # Check if request is for API or HTML
+    if request.url.path.startswith("/api/"):
+        return JSONResponse(
+            status_code=404,
+            content={"success": False, "error": "Not found"}
+        )
+    else:
+        # Extract CRS from URL if available
+        path_parts = request.url.path.split("/")
+        crs = path_parts[2] if len(path_parts) > 2 else "UNKNOWN"
+        
+        return templates.TemplateResponse(
+            "errors/404.html",
+            {"request": request, "crs": crs},
+            status_code=404
+        )
+
+
+# Custom 500 handler
+@app.exception_handler(500)
+async def server_error_handler(request: Request, exc: Exception):
+    if request.url.path.startswith("/api/"):
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "error": "Internal server error"}
+        )
+    else:
+        return templates.TemplateResponse(
+            "errors/500.html",
+            {"request": request},
+            status_code=500
+        )
 
 
 # Health check endpoint
@@ -57,14 +86,30 @@ async def health_check():
 @app.exception_handler(Exception)
 async def global_exception_handler(request, exc):
     """Handle uncaught exceptions"""
-    return JSONResponse(
-        status_code=500,
-        content={
-            "success": False,
-            "error": "Internal server error",
-            "detail": str(exc) if settings.debug else "An unexpected error occurred"
-        }
-    )
+    # Check if it's an HTTPException
+    if isinstance(exc, HTTPException):
+        if exc.status_code == 404:
+            return await not_found_handler(request, exc)
+        elif exc.status_code == 500:
+            return await server_error_handler(request, exc)
+    
+    # For API routes, return JSON
+    if request.url.path.startswith("/api/"):
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "error": "Internal server error",
+                "detail": str(exc) if settings.debug else "An unexpected error occurred"
+            }
+        )
+    else:
+        # For web routes, return HTML error page
+        return templates.TemplateResponse(
+            "errors/500.html",
+            {"request": request},
+            status_code=500
+        )
 
 
 if __name__ == "__main__":
