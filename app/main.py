@@ -1,6 +1,8 @@
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from app.config import settings
 from app.routers import boards, pages
@@ -18,6 +20,9 @@ app = FastAPI(
 # Configure Jinja2 templates
 templates = Jinja2Templates(directory="app/templates")
 
+# Mount static files
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
 
 # Configure CORS
 app.add_middleware(
@@ -27,6 +32,9 @@ app.add_middleware(
     allow_methods=settings.cors_allow_methods,
     allow_headers=settings.cors_allow_headers,
 )
+
+# Configure GZip compression
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 
 # Include routers
