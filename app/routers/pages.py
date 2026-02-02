@@ -129,7 +129,7 @@ async def board_view(request: Request, crs: str, view: str):
 async def board_content(request: Request, crs: str, view: str):
     """
     HTMX endpoint for tab switching
-    Returns tabs (with updated active state) + board content wrapper via OOB swap
+    Returns tabs (with updated active state) + board content wrapper + search form via OOB swap
     """
     crs = validate_crs(crs)
     
@@ -154,9 +154,14 @@ async def board_content(request: Request, crs: str, view: str):
         timestamp=get_timestamp()
     )
     
-    # Return tabs + board-content (both with hx-swap-oob="true")
-    # HTMX will swap both #tabs and #board-content divs
-    return HTMLResponse(content=tabs_html + board_content_html)
+    # Render search form with updated view parameter
+    search_form_html = templates.get_template("partials/search_form.html").render(
+        view=view
+    )
+    
+    # Return tabs + board-content + search-form (all with hx-swap-oob="true")
+    # HTMX will swap #tabs, #board-content, and #search-form divs
+    return HTMLResponse(content=tabs_html + board_content_html + search_form_html)
 
 
 @router.get("/board/{crs}/{view}/refresh", response_class=HTMLResponse)

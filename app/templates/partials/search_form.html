@@ -1,0 +1,16 @@
+<div id="search-form" hx-swap-oob="true" class="search-box" style="margin-top: 2rem;">
+    <h2>Find Another Station</h2>
+    <form action="/board" method="get">
+        <div class="input-group">
+            <input type="text" 
+                   name="crs" 
+                   placeholder="Enter CRS code (e.g., LHD, WAT, VIC)" 
+                   maxlength="3"
+                   pattern="[A-Za-z]{3}"
+                   required
+                   autocomplete="off">
+            <input type="hidden" name="view" value="{{ view }}">
+            <button type="submit">View Board</button>
+        </div>
+    </form>
+</div>
