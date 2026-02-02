@@ -21,7 +21,7 @@ def load_stations() -> List[Dict]:
 
 def search_stations(query: str, limit: int = 10) -> List[Dict]:
     """
-    Fuzzy search stations by name or CRS code
+    Fuzzy search stations by name or CRS code with position-aware ranking
     
     Args:
         query: Search query (station name or CRS code)
@@ -34,41 +34,60 @@ def search_stations(query: str, limit: int = 10) -> List[Dict]:
         search_stations("leath") -> [{"stationName": "Leatherhead", "crsCode": "LHD", ...}]
         search_stations("LHD") -> [{"stationName": "Leatherhead", "crsCode": "LHD", ...}]
         search_stations("london") -> [{"stationName": "London Waterloo", ...}, ...]
+        search_stations("lea") -> [{"stationName": "Leagrave", ...}, {"stationName": "Lea Bridge", ...}, ...]
+        
+    Ranking algorithm:
+        - Uses WRatio for position-aware fuzzy matching
+        - +100 bonus for exact CRS code match (ensures CRS matches rank first)
+        - +40 bonus if station name starts with query (case-insensitive)
+        - +20 bonus if any word in station name starts with query
+        - Sorts by composite score (desc), then alphabetically
     """
     if not query or len(query.strip()) == 0:
         return []
     
     stations = load_stations()
     query = query.strip()
+    query_lower = query.lower()
+    query_upper = query.upper()
     
-    # If query looks like CRS code (3 letters), prioritize exact CRS matches
-    if len(query) == 3 and query.isalpha():
-        crs_query = query.upper()
-        exact_crs = [s for s in stations if s['crsCode'] == crs_query]
-        if exact_crs:
-            return exact_crs  # Return immediately if exact CRS match
+    # Calculate scores for all stations with position and CRS bonuses
+    scored_stations = []
     
-    # Fuzzy search on station names using RapidFuzz
-    # partial_ratio allows substring matching ("leath" matches "Leatherhead")
-    station_names = [s['stationName'] for s in stations]
-    
-    matches = process.extract(
-        query,
-        station_names,
-        scorer=fuzz.partial_ratio,  # Substring-based fuzzy matching
-        limit=limit * 2  # Get more candidates, filter below
-    )
-    
-    # Filter by minimum score and map back to full station objects
-    results = []
-    for name, score, idx in matches:
-        if score >= 60:  # Minimum similarity threshold (0-100 scale)
-            results.append(stations[idx])
+    for station in stations:
+        station_name = station['stationName']
+        station_lower = station_name.lower()
         
-        if len(results) >= limit:
-            break
+        # Base fuzzy score using WRatio (position-aware)
+        base_score = fuzz.WRatio(query, station_name)
+        
+        # Position bonuses
+        position_bonus = 0
+        
+        # +40 if station name starts with query
+        if station_lower.startswith(query_lower):
+            position_bonus = 40
+        # +20 if any word in station name starts with query
+        elif any(word.startswith(query_lower) for word in station_lower.split()):
+            position_bonus = 20
+        
+        # CRS code exact match gets massive bonus
+        crs_bonus = 0
+        if station['crsCode'] == query_upper:
+            crs_bonus = 100
+        
+        # Composite score (capped at 200 to accommodate CRS bonus)
+        composite_score = min(base_score + position_bonus + crs_bonus, 200)
+        
+        # Only include stations above minimum threshold
+        if composite_score >= 50:  # Lowered threshold to catch more fuzzy matches
+            scored_stations.append((station, composite_score, station_name))
     
-    return results[:limit]
+    # Sort by composite score (desc), then alphabetically by station name
+    scored_stations.sort(key=lambda x: (-x[1], x[2]))
+    
+    # Return top results
+    return [station for station, score, name in scored_stations[:limit]]
 
 
 def get_station_by_crs(crs_code: str) -> Dict | None:
