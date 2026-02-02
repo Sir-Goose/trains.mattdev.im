@@ -6,7 +6,7 @@
     <a href="/" class="header-link">
         <div class="header">
             <h1>{{ station_name }}</h1>
-            <p class="station-name">{{ crs }} • Live Board</p>
+            <p class="station-name">{{ crs }} • {{ trains|length }} train{{ 's' if trains|length != 1 else '' }} • Next 2 hours</p>
         </div>
     </a>
     
