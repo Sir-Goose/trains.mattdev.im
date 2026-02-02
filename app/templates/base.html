@@ -55,6 +55,40 @@
             font-size: 0.875rem;
         }
         
+        /* Clickable header link - make entire header area interactive */
+        .header-link {
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            transition: opacity 0.2s, transform 0.15s;
+        }
+        
+        .header-link:hover {
+            opacity: 0.85;
+            transform: translateY(-1px);
+        }
+        
+        .header-link:active {
+            transform: translateY(0);
+        }
+        
+        .header-link .header {
+            cursor: pointer;
+        }
+        
+        /* Add subtle home icon hint */
+        .header-link .header h1::before {
+            content: "← ";
+            opacity: 0;
+            transition: opacity 0.2s;
+            display: inline-block;
+            margin-right: 0.25rem;
+        }
+        
+        .header-link:hover .header h1::before {
+            opacity: 0.6;
+        }
+        
         .tabs {
             display: flex;
             gap: 0.5rem;

@@ -80,10 +80,15 @@ async def index(request: Request):
 
 
 @router.get("/board", response_class=RedirectResponse)
-async def board_search(crs: str):
+async def board_search(crs: str, view: Optional[str] = "departures"):
     """Handle CRS search form submission"""
     crs = validate_crs(crs)
-    return RedirectResponse(url=f"/board/{crs}/departures", status_code=303)
+    
+    # Validate view parameter
+    if view not in ['departures', 'arrivals', 'passing']:
+        view = 'departures'
+    
+    return RedirectResponse(url=f"/board/{crs}/{view}", status_code=303)
 
 
 @router.get("/board/{crs}", response_class=RedirectResponse)
