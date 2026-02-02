@@ -157,6 +157,44 @@
             border: 1px solid var(--border);
         }
         
+        /* Time display with status indicators */
+        .time-display {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            font-weight: 600;
+        }
+        
+        .time-ontime {
+            color: var(--success);
+        }
+        
+        .time-delayed {
+            color: var(--warning);
+        }
+        
+        .time-cancelled {
+            color: var(--danger);
+        }
+        
+        .time-strikethrough {
+            text-decoration: line-through;
+            opacity: 0.7;
+        }
+        
+        .cancelled-badge {
+            display: inline-block;
+            padding: 0.125rem 0.5rem;
+            background-color: var(--danger);
+            color: white;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            line-height: 1.4;
+        }
+        
         .empty-state {
             text-align: center;
             padding: 3rem 1rem;
@@ -302,6 +340,15 @@
             
             .hide-mobile {
                 display: none;
+            }
+            
+            .time-display {
+                font-size: 0.875rem;
+            }
+            
+            .cancelled-badge {
+                font-size: 0.625rem;
+                padding: 0.125rem 0.375rem;
             }
             
             .station-grid {

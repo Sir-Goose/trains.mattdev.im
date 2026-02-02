@@ -66,7 +66,15 @@ class Train(BaseModel):
     @property
     def destination_via(self) -> Optional[str]:
         """Helper to get 'via' routing info if present"""
-        return self.destination[0].via if self.destination else None
+        via = self.destination[0].via if self.destination else None
+        if not via:
+            return None
+
+        cleaned = via.strip()
+        if cleaned.lower().startswith("via "):
+            cleaned = cleaned[4:].lstrip()
+
+        return cleaned or None
     
     @property
     def display_status(self) -> str:
@@ -91,6 +99,53 @@ class Train(BaseModel):
             return self.estimated_arrival_time or "No information"
         
         return "Unknown"
+    
+    @property
+    def display_time_departure(self) -> str:
+        """Smart departure time display with status indicator"""
+        if not self.scheduled_departure_time:
+            return "N/A"
+        
+        scheduled = self.scheduled_departure_time
+        estimated = self.estimated_departure_time
+        
+        if self.is_cancelled:
+            return scheduled  # Template will add strikethrough + badge
+        elif estimated == "On time" or not estimated:
+            return scheduled
+        else:
+            return f"{scheduled} → {estimated}"
+    
+    @property
+    def display_time_arrival(self) -> str:
+        """Smart arrival time display with status indicator"""
+        if not self.scheduled_arrival_time:
+            return "N/A"
+        
+        scheduled = self.scheduled_arrival_time
+        estimated = self.estimated_arrival_time
+        
+        if self.is_cancelled:
+            return scheduled  # Template will add strikethrough + badge
+        elif estimated == "On time" or not estimated:
+            return scheduled
+        else:
+            return f"{scheduled} → {estimated}"
+    
+    @property
+    def time_status_class(self) -> str:
+        """CSS class for time status styling"""
+        if self.is_cancelled:
+            return "time-cancelled"
+        
+        # Check if delayed (for either departure or arrival)
+        if self.estimated_departure_time and self.estimated_departure_time not in ["On time", self.scheduled_departure_time]:
+            return "time-delayed"
+        
+        if self.estimated_arrival_time and self.estimated_arrival_time not in ["On time", self.scheduled_arrival_time]:
+            return "time-delayed"
+        
+        return "time-ontime"
 
 
 class Board(BaseModel):

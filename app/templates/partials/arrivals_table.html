@@ -19,27 +19,24 @@
                 <th>Time</th>
                 <th>Origin</th>
                 <th>Platform</th>
-                <th>Status</th>
-                <th class="hide-small">Expected</th>
                 <th class="hide-mobile">Operator</th>
             </tr>
         </thead>
         <tbody>
             {% for train in trains %}
             <tr {% if train.is_cancelled %}class="status-cancelled"{% endif %}>
-                <td><strong>{{ train.scheduled_arrival_time }}</strong></td>
+                <td>
+                    <span class="time-display {{ train.time_status_class }}">
+                        {% if train.is_cancelled %}
+                            <span class="time-strikethrough">{{ train.scheduled_arrival_time }}</span>
+                            <span class="cancelled-badge">Cancelled</span>
+                        {% else %}
+                            <strong>{{ train.display_time_arrival }}</strong>
+                        {% endif %}
+                    </span>
+                </td>
                 <td>{{ train.origin_name }}</td>
                 <td><span class="platform">{{ train.platform or 'TBC' }}</span></td>
-                <td>
-                    {% if train.is_cancelled %}
-                    <span class="status-cancelled">Cancelled</span>
-                    {% elif train.estimated_arrival_time == 'On time' %}
-                    <span class="status-ontime">On time</span>
-                    {% else %}
-                    <span class="status-delayed">{{ train.estimated_arrival_time }}</span>
-                    {% endif %}
-                </td>
-                <td class="hide-small">{{ train.estimated_arrival_time }}</td>
                 <td class="hide-mobile">{{ train.operator }}</td>
             </tr>
             {% endfor %}
