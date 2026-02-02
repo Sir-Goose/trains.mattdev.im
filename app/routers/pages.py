@@ -19,10 +19,20 @@ def validate_crs(crs: str) -> str:
         raise HTTPException(status_code=404, detail="Invalid CRS code")
     return crs.upper()
 
+def get_trains_for_view(board, view: str):
+    """Extract trains for specific view from board object"""
+    if view == 'departures':
+        return board.departures
+    elif view == 'arrivals':
+        return board.arrivals
+    elif view == 'passing':
+        return board.passing_through
+    return []
+
 async def get_board_data(crs: str, view: str):
     """
-    Fetch board data for a specific view
-    Returns: (trains, station_name, error_flag)
+    Fetch board data for a specific view with total train count
+    Returns: (trains_for_view, total_trains, station_name, error_flag)
     """
     try:
         board = await rail_api_service.get_board(crs, use_cache=True)
@@ -34,17 +44,11 @@ async def get_board_data(crs: str, view: str):
             if not board:
                 raise HTTPException(status_code=404, detail=f"Station {crs} not found")
         
-        # Get appropriate train list based on view
-        if view == 'departures':
-            trains = board.departures
-        elif view == 'arrivals':
-            trains = board.arrivals
-        elif view == 'passing':
-            trains = board.passing_through
-        else:
-            trains = []
+        # Get trains for specific view and total count
+        trains_for_view = get_trains_for_view(board, view)
+        total_trains = len(board.trains)
         
-        return trains, board.location_name, False
+        return trains_for_view, total_trains, board.location_name, False
         
     except HTTPException:
         raise
@@ -54,15 +58,9 @@ async def get_board_data(crs: str, view: str):
         cached_board = cache.get(cache_key)
         
         if cached_board:
-            if view == 'departures':
-                trains = cached_board.departures
-            elif view == 'arrivals':
-                trains = cached_board.arrivals
-            elif view == 'passing':
-                trains = cached_board.passing_through
-            else:
-                trains = []
-            return trains, cached_board.location_name, True  # error flag
+            trains_for_view = get_trains_for_view(cached_board, view)
+            total_trains = len(cached_board.trains)
+            return trains_for_view, total_trains, cached_board.location_name, True  # error flag
         else:
             raise HTTPException(status_code=500, detail="Service temporarily unavailable")
 
@@ -109,7 +107,7 @@ async def board_view(request: Request, crs: str, view: str):
     if view not in ['departures', 'arrivals', 'passing']:
         raise HTTPException(status_code=404, detail="Invalid view")
     
-    trains, station_name, error = await get_board_data(crs, view)
+    trains, total_trains, station_name, error = await get_board_data(crs, view)
     
     return templates.TemplateResponse(
         "board.html",
@@ -119,6 +117,7 @@ async def board_view(request: Request, crs: str, view: str):
             "station_name": station_name,
             "view": view,
             "trains": trains,
+            "total_trains": total_trains,
             "error": error,
             "timestamp": get_timestamp()
         }
@@ -136,7 +135,7 @@ async def board_content(request: Request, crs: str, view: str):
     if view not in ['departures', 'arrivals', 'passing']:
         raise HTTPException(status_code=404, detail="Invalid view")
     
-    trains, station_name, error = await get_board_data(crs, view)
+    trains, total_trains, station_name, error = await get_board_data(crs, view)
     
     # Render tabs with updated active state
     tabs_html = templates.get_template("partials/tabs.html").render(
@@ -177,7 +176,7 @@ async def board_refresh(request: Request, crs: str, view: str):
         return HTMLResponse(status_code=204)
     
     try:
-        trains, station_name, error = await get_board_data(crs, view)
+        trains, total_trains, station_name, error = await get_board_data(crs, view)
         
         return templates.TemplateResponse(
             f"partials/{view}_table.html",
