@@ -15,6 +15,9 @@ pydantic-settings==2.7.1
 # Environment variables
 python-dotenv==1.0.1
 
+# Fuzzy search for station names
+rapidfuzz>=3.0.0
+
 # Existing dependencies
 requests==2.32.5
 certifi==2026.1.4

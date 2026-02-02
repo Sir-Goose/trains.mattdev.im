@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from app.config import settings
-from app.routers import boards, pages
+from app.routers import boards, pages, stations
 
 
 # Create FastAPI application
@@ -40,6 +40,7 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 # Include routers
 app.include_router(boards.router)  # JSON API routes
 app.include_router(pages.router)   # HTML template routes
+app.include_router(stations.router)  # Station search API routes
 
 
 # Custom 404 handler

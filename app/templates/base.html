@@ -60,16 +60,11 @@
             text-decoration: none;
             color: inherit;
             display: block;
-            transition: opacity 0.2s, transform 0.15s;
+            transition: opacity 0.2s;
         }
         
         .header-link:hover {
             opacity: 0.85;
-            transform: translateY(-1px);
-        }
-        
-        .header-link:active {
-            transform: translateY(0);
         }
         
         .header-link .header {
@@ -79,14 +74,14 @@
         /* Add subtle home icon hint */
         .header-link .header h1::before {
             content: "← ";
-            opacity: 0;
+            opacity: 0.5;
             transition: opacity 0.2s;
             display: inline-block;
             margin-right: 0.25rem;
         }
         
         .header-link:hover .header h1::before {
-            opacity: 0.6;
+            opacity: 1.0;
         }
         
         .tabs {
@@ -348,6 +343,84 @@
             background: #2563eb;
         }
         
+        /* Autocomplete container and dropdown */
+        .autocomplete-container {
+            position: relative;
+        }
+
+        .autocomplete-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-top: none;
+            border-radius: 0 0 6px 6px;
+            max-height: 400px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            margin-top: -1px;
+        }
+
+        .autocomplete-dropdown:empty {
+            display: none;
+        }
+
+        .autocomplete-result {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.15s;
+            text-decoration: none;
+            color: var(--text-primary);
+        }
+
+        .autocomplete-result:hover,
+        .autocomplete-result:focus {
+            background: var(--bg-tertiary);
+            outline: none;
+        }
+
+        .autocomplete-result:last-child {
+            border-bottom: none;
+            border-radius: 0 0 6px 6px;
+        }
+
+        .autocomplete-result .station-name {
+            font-weight: 500;
+        }
+
+        .autocomplete-result .station-crs {
+            font-family: 'Courier New', monospace;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            font-weight: 600;
+            background: var(--bg-tertiary);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+        }
+
+        .autocomplete-result:hover .station-crs,
+        .autocomplete-result:focus .station-crs {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        .autocomplete-empty {
+            padding: 1rem;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            font-style: italic;
+        }
+        
         @media (max-width: 768px) {
             .container {
                 padding: 0.75rem;
@@ -389,6 +462,14 @@
             .station-grid {
                 grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
             }
+            
+            .autocomplete-dropdown {
+                max-height: 300px;
+            }
+            
+            .autocomplete-result {
+                padding: 0.625rem 0.75rem;
+            }
         }
         
         @media (max-width: 375px) {
@@ -406,6 +487,17 @@
         {% block footer %}
         <div class="timestamp">Updated at: <span id="update-time">{{ timestamp }}</span></div>
         {% endblock %}
+        
+        <div style="margin-top: 0.5rem; font-size: 0.75rem; color: var(--text-secondary);">
+            Station data © 
+            <a href="https://github.com/davwheat/uk-railway-stations" 
+               target="_blank" 
+               rel="noopener"
+               style="color: var(--accent); text-decoration: none;">
+                davwheat
+            </a>, 
+            Trainline EU, OpenStreetMap contributors
+        </div>
     </footer>
 </body>
 </html>

@@ -9,17 +9,21 @@
     
     <div class="search-box">
         <h2>Find a Station</h2>
-        <form action="/board" method="get">
-            <div class="input-group">
-                <input type="text" 
-                       name="crs" 
-                       placeholder="Enter CRS code (e.g., LHD, WAT, VIC)" 
-                       maxlength="3"
-                       pattern="[A-Za-z]{3}"
-                       required>
-                <button type="submit">View Board</button>
-            </div>
-        </form>
+        <div class="input-group autocomplete-container">
+            <input type="text" 
+                   id="station-search-home"
+                   name="q"
+                   placeholder="Search by station name or CRS code..."
+                   autocomplete="off"
+                   hx-get="/api/stations/search"
+                   hx-trigger="keyup changed"
+                   hx-target="#autocomplete-results-home"
+                   hx-include="this"
+                   hx-vals='{"view": "departures"}'
+                   required>
+            
+            <div id="autocomplete-results-home" class="autocomplete-dropdown"></div>
+        </div>
     </div>
     
     <h2 style="margin-bottom: 1rem;">Common Stations</h2>

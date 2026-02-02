@@ -1,0 +1,7 @@
+{% for station in results %}
+<a href="/board/{{ station.crsCode }}/{{ view }}" 
+   class="autocomplete-result">
+    <span class="station-name">{{ station.stationName }}</span>
+    <span class="station-crs">{{ station.crsCode }}</span>
+</a>
+{% endfor %}
