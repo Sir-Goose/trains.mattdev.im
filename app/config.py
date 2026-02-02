@@ -9,6 +9,8 @@ class Settings(BaseSettings):
     # API Configuration
     rail_api_base_url: str = "https://api1.raildata.org.uk/1010-live-arrival-and-departure-boards-arr-and-dep1_1/LDBWS/api/20220120"
     rail_api_key: str = ""
+    rail_api_num_rows: int = 150  # Maximum trains to return
+    rail_api_time_window: int = 120  # Time window in minutes (2 hours)
     
     # Cache Configuration
     cache_ttl_seconds: int = 60

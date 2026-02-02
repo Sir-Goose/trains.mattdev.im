@@ -42,10 +42,15 @@ class RailAPIService:
         
         # Fetch from API
         url = f"{self.base_url}/GetArrivalDepartureBoard/{crs_code}"
+        params = {
+            "numRows": settings.rail_api_num_rows,
+            "timeWindow": settings.rail_api_time_window,
+            "timeOffset": 0  # Start from now
+        }
         
         async with httpx.AsyncClient(timeout=10.0) as client:
             try:
-                response = await client.get(url, headers=self._get_headers())
+                response = await client.get(url, headers=self._get_headers(), params=params)
                 response.raise_for_status()
                 
                 data = response.json()
