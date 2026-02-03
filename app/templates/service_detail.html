@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <!-- Back link -->
+    <div class="back-button">
+        <a href="javascript:history.back()" class="back-link">
+            ← Back to board
+        </a>
+    </div>
+    
+    <!-- Service Header -->
+    <div class="service-header">
+        <h1 class="service-title">
+            {{ service.origin_name }} → {{ service.destination_name }}
+        </h1>
+        <div class="service-meta">
+            <span class="operator">{{ service.operator }}</span>
+            {% if service.platform %}
+            <span class="platform">Platform {{ service.platform }}</span>
+            {% endif %}
+            {% if service.isCancelled %}
+            <span class="cancelled-badge">Cancelled</span>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Status Banner -->
+    {% if service.isCancelled %}
+    <div class="status-banner status-banner-cancelled">
+        <span class="status-icon">⚠️</span>
+        <div>
+            <strong>This service has been cancelled</strong>
+            {% if service.cancelReason %}
+            <p>{{ service.cancelReason }}</p>
+            {% endif %}
+        </div>
+    </div>
+    {% elif service.delayReason %}
+    <div class="status-banner status-banner-delayed">
+        <span class="status-icon">⚠️</span>
+        <div>
+            <strong>This service is delayed</strong>
+            <p>{{ service.delayReason }}</p>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Service Timeline (auto-refreshing) -->
+    <div id="service-timeline"
+         hx-get="/service/{{ service.serviceID }}/refresh"
+         hx-trigger="every 60s"
+         hx-swap="innerHTML">
+        {% include "partials/service_timeline.html" %}
+    </div>
+    
+    <!-- Service Information Card -->
+    <div class="service-info-card">
+        <h3>Service Information</h3>
+        <dl class="info-grid">
+            <dt>Operator</dt>
+            <dd>{{ service.operator }}</dd>
+            
+            {% if service.platform %}
+            <dt>Platform</dt>
+            <dd>{{ service.platform }}</dd>
+            {% endif %}
+            
+            {% if service.length %}
+            <dt>Coaches</dt>
+            <dd>{{ service.length }}</dd>
+            {% endif %}
+            
+            {% if service.rsid %}
+            <dt>Service ID</dt>
+            <dd class="monospace">{{ service.rsid }}</dd>
+            {% endif %}
+            
+            <dt>Service Type</dt>
+            <dd>{{ service.serviceType|title }}</dd>
+        </dl>
+    </div>
+</div>
+{% endblock %}

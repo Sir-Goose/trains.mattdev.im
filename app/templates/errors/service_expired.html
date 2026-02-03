@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="back-button">
+        <a href="javascript:history.back()" class="back-link">
+            ← Back to board
+        </a>
+    </div>
+    
+    <div style="text-align: center; padding: 4rem 1rem;">
+        <h1 style="font-size: 3rem; margin-bottom: 1rem;">⏱️</h1>
+        <p style="font-size: 1.25rem; color: var(--text-secondary); margin-bottom: 2rem;">
+            Service Expired
+        </p>
+        <p style="margin-bottom: 2rem; color: var(--text-secondary); max-width: 600px; margin-left: auto; margin-right: auto;">
+            This train service is no longer available. Service details are only stored for a short time 
+            (typically up to 2 minutes after the train departs or arrives).
+        </p>
+        <p style="margin-bottom: 2rem; color: var(--text-secondary);">
+            Please go back to the board and click on a current or upcoming service.
+        </p>
+        <a href="/" style="display: inline-block; padding: 0.75rem 1.5rem; background: var(--accent); color: white; text-decoration: none; border-radius: 6px;">
+            Go to Homepage
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer %}
+<div class="timestamp">Leatherhead Live &copy; 2026</div>
+{% endblock %}

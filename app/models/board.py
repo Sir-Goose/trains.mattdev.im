@@ -12,7 +12,7 @@ class Location(BaseModel):
 
 
 class Train(BaseModel):
-    """Train service information"""
+    """Train service information (from WithDetails endpoint)"""
     scheduled_arrival_time: Optional[str] = Field(None, alias='sta')
     estimated_arrival_time: Optional[str] = Field(None, alias='eta')
     scheduled_departure_time: Optional[str] = Field(None, alias='std')
@@ -34,6 +34,10 @@ class Train(BaseModel):
     detach_front: bool = Field(False, alias='detachFront')
     delay_reason: Optional[str] = Field(None, alias='delayReason')
     cancel_reason: Optional[str] = Field(None, alias='cancelReason')
+    rsid: Optional[str] = Field(None, alias='rsid')  # Retail Service ID
+    # Calling points from WithDetails endpoint
+    previous_calling_points: Optional[List[CallingPointList]] = Field(default_factory=list, alias='previousCallingPoints')
+    subsequent_calling_points: Optional[List[CallingPointList]] = Field(default_factory=list, alias='subsequentCallingPoints')
     
     class Config:
         populate_by_name = True
@@ -184,3 +188,148 @@ class BoardResponse(BaseModel):
     data: Optional[Board] = None
     error: Optional[str] = None
     cached: bool = False
+
+
+class CallingPoint(BaseModel):
+    """A single station stop on a train's route"""
+    locationName: str
+    crs: str
+    st: str  # Scheduled time "18:35"
+    et: str = "On time"  # Estimated time "18:40" or "On time"
+    at: Optional[str] = None  # Actual time (if train has passed) "18:39"
+    pta: Optional[str] = None  # Planned time of arrival
+    eta: Optional[str] = None  # Estimated time of arrival
+    ata: Optional[str] = None  # Actual time of arrival
+    isCancelled: Optional[bool] = False
+    length: Optional[int] = None
+    detachFront: Optional[bool] = False
+    
+    @property
+    def has_passed(self) -> bool:
+        """Check if train has already been through this station"""
+        return self.at is not None or self.ata is not None
+    
+    @property
+    def display_time(self) -> str:
+        """Get the best available time to display"""
+        # For arrivals, prioritize: actual > estimated > planned/scheduled
+        if self.ata:
+            return self.ata
+        if self.eta and self.eta != "On time":
+            return self.eta
+        if self.pta:
+            return self.pta
+        
+        # For departures, prioritize: actual > estimated > scheduled
+        if self.at:
+            return self.at
+        if self.et and self.et != "On time":
+            return self.et
+        return self.st
+    
+    @property
+    def is_delayed(self) -> bool:
+        """Check if this stop is delayed"""
+        if self.et and self.et not in ["On time", self.st, "Delayed", "Cancelled"]:
+            return True
+        if self.eta and self.eta not in ["On time", self.pta or self.st, "Delayed", "Cancelled"]:
+            return True
+        return False
+    
+    @property
+    def status_class(self) -> str:
+        """CSS class for time status"""
+        if self.isCancelled:
+            return "status-cancelled"
+        if self.has_passed:
+            return "status-passed"
+        if self.is_delayed:
+            return "status-delayed"
+        return "status-ontime"
+
+
+class CallingPointList(BaseModel):
+    """Group of calling points (can have multiple for split services)"""
+    callingPoint: List[CallingPoint]
+    serviceType: Optional[str] = "train"
+    serviceChangeRequired: Optional[bool] = False
+    assocIsCancelled: Optional[bool] = False
+
+
+class ServiceDetails(BaseModel):
+    """Detailed information about a specific train service"""
+    generatedAt: str
+    serviceType: str = "train"  # "train" or "bus"
+    locationName: str  # Station name
+    crs: str  # Station CRS
+    operator: str  # "South Western Railway"
+    operatorCode: str  # "SW"
+    rsid: Optional[str] = None  # Retail Service ID
+    
+    # Times at current station
+    sta: Optional[str] = None  # Scheduled arrival
+    eta: Optional[str] = None  # Estimated arrival
+    ata: Optional[str] = None  # Actual arrival
+    std: Optional[str] = None  # Scheduled departure
+    etd: Optional[str] = None  # Estimated departure
+    atd: Optional[str] = None  # Actual departure
+    
+    # Service info
+    platform: Optional[str] = None
+    isCancelled: bool = False
+    filterLocationName: Optional[str] = None
+    cancelReason: Optional[str] = None
+    delayReason: Optional[str] = None
+    serviceID: str
+    
+    # Journey endpoints
+    origin: List[Location]
+    destination: List[Location]
+    currentOrigins: Optional[List[Location]] = Field(default_factory=list)
+    currentDestinations: Optional[List[Location]] = Field(default_factory=list)
+    
+    # Calling points
+    previousCallingPoints: Optional[List[CallingPointList]] = Field(default_factory=list)
+    subsequentCallingPoints: Optional[List[CallingPointList]] = Field(default_factory=list)
+    
+    # Additional service info
+    length: Optional[int] = None  # Number of coaches
+    detachFront: Optional[bool] = False
+    isReverseFormation: Optional[bool] = False
+    
+    class Config:
+        populate_by_name = True
+    
+    @property
+    def all_previous_stops(self) -> List[CallingPoint]:
+        """Flatten previous calling points into a single list"""
+        if not self.previousCallingPoints:
+            return []
+        stops = []
+        for cpl in self.previousCallingPoints:
+            stops.extend(cpl.callingPoint)
+        return stops
+    
+    @property
+    def all_subsequent_stops(self) -> List[CallingPoint]:
+        """Flatten subsequent calling points into a single list"""
+        if not self.subsequentCallingPoints:
+            return []
+        stops = []
+        for cpl in self.subsequentCallingPoints:
+            stops.extend(cpl.callingPoint)
+        return stops
+    
+    @property
+    def origin_name(self) -> str:
+        """Get origin station name"""
+        if self.currentOrigins and len(self.currentOrigins) > 0:
+            return self.currentOrigins[0].locationName
+        return self.origin[0].locationName if self.origin else "Unknown"
+    
+    @property
+    def destination_name(self) -> str:
+        """Get destination station name"""
+        if self.currentDestinations and len(self.currentDestinations) > 0:
+            return self.currentDestinations[0].locationName
+        return self.destination[0].locationName if self.destination else "Unknown"

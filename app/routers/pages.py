@@ -89,6 +89,54 @@ async def board_search(crs: str, view: Optional[str] = "departures"):
     return RedirectResponse(url=f"/board/{crs}/{view}", status_code=303)
 
 
+@router.get("/service/{service_id}", response_class=HTMLResponse)
+async def service_detail_page(request: Request, service_id: str):
+    """Display detailed information about a specific train service"""
+    service = await rail_api_service.get_service_details(service_id)
+    
+    if not service:
+        # Service has expired from cache - show user-friendly message
+        return templates.TemplateResponse(
+            "errors/service_expired.html",
+            {
+                "request": request,
+                "service_id": service_id,
+                "timestamp": get_timestamp()
+            },
+            status_code=404
+        )
+    
+    return templates.TemplateResponse(
+        "service_detail.html",
+        {
+            "request": request,
+            "service": service,
+            "timestamp": get_timestamp()
+        }
+    )
+
+
+@router.get("/service/{service_id}/refresh", response_class=HTMLResponse)
+async def service_detail_refresh(request: Request, service_id: str):
+    """HTMX endpoint to refresh just the service timeline content"""
+    service = await rail_api_service.get_service_details(service_id, use_cache=False)
+    
+    if not service:
+        return HTMLResponse(
+            content="<div class='error-message'>Service no longer available</div>",
+            status_code=200
+        )
+    
+    return templates.TemplateResponse(
+        "partials/service_timeline.html",
+        {
+            "request": request,
+            "service": service,
+            "timestamp": get_timestamp()
+        }
+    )
+
+
 @router.get("/board/{crs}", response_class=RedirectResponse)
 async def board_redirect(crs: str):
     """Redirect /board/{crs} to /board/{crs}/departures"""

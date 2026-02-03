@@ -477,6 +477,343 @@
                 display: none;
             }
         }
+        
+        /* Service Detail Page Styles */
+        .back-button {
+            margin-bottom: 1rem;
+        }
+        
+        .back-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            transition: color 0.2s;
+        }
+        
+        .back-link:hover {
+            color: var(--accent);
+        }
+        
+        .service-header {
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .service-title {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+        
+        .service-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .operator {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        /* Status Banners */
+        .status-banner {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            align-items: flex-start;
+            border-left: 4px solid;
+        }
+        
+        .status-banner strong {
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+        
+        .status-banner-cancelled {
+            background-color: rgba(239, 68, 68, 0.1);
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+        
+        .status-banner-delayed {
+            background-color: rgba(234, 179, 8, 0.1);
+            border-color: var(--warning);
+            color: var(--warning);
+        }
+        
+        .status-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+        
+        /* Journey Timeline */
+        .journey-timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            margin-bottom: 2rem;
+        }
+        
+        .timeline-stop {
+            display: flex;
+            gap: 1.5rem;
+            position: relative;
+        }
+        
+        .timeline-marker {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex-shrink: 0;
+            width: 40px;
+        }
+        
+        .marker-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            z-index: 2;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border);
+        }
+        
+        .marker-passed {
+            background: var(--success);
+            border-color: var(--success);
+            color: white;
+        }
+        
+        .marker-current {
+            background: var(--accent);
+            border-color: var(--accent);
+            font-size: 1.25rem;
+            animation: pulse 2s infinite;
+        }
+        
+        .marker-upcoming {
+            background: var(--bg-secondary);
+            border-color: var(--border);
+            color: var(--text-secondary);
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+            }
+            50% {
+                box-shadow: 0 0 0 8px rgba(59, 130, 246, 0);
+            }
+        }
+        
+        .timeline-line {
+            width: 2px;
+            flex-grow: 1;
+            background: var(--border);
+            min-height: 40px;
+        }
+        
+        .passed-stop .timeline-line {
+            background: var(--success);
+        }
+        
+        /* Stop Details */
+        .stop-details {
+            flex-grow: 1;
+            padding: 0.5rem 0 1.5rem 0;
+        }
+        
+        .timeline-stop:last-child .stop-details {
+            padding-bottom: 0.5rem;
+        }
+        
+        .stop-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 0.5rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        .stop-name {
+            font-size: 1.1rem;
+            margin: 0;
+            color: var(--text-primary);
+        }
+        
+        .passed-stop .stop-name {
+            color: var(--text-secondary);
+        }
+        
+        .stop-crs {
+            font-family: 'Courier New', monospace;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            font-weight: 600;
+            background: var(--bg-tertiary);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+        }
+        
+        .current-position-label {
+            margin-bottom: 0.5rem;
+            color: var(--accent);
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        
+        .next-stop-badge {
+            display: inline-block;
+            background: rgba(234, 179, 8, 0.2);
+            color: var(--warning);
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .stop-times {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        
+        .time-row {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .time-label {
+            color: var(--text-secondary);
+            min-width: 80px;
+        }
+        
+        .time-value {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+        
+        .passed-stop .time-value {
+            color: var(--text-secondary);
+        }
+        
+        .scheduled-time {
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+        
+        .actual-badge {
+            display: inline-block;
+            background: var(--success);
+            color: white;
+            font-size: 0.75rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .ontime-text {
+            color: var(--success);
+            font-size: 0.875rem;
+        }
+        
+        /* Service Info Card */
+        .service-info-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+        
+        .service-info-card h3 {
+            margin: 0 0 1rem 0;
+            font-size: 1.1rem;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 0.75rem 1.5rem;
+            margin: 0;
+        }
+        
+        .info-grid dt {
+            color: var(--text-secondary);
+            font-weight: normal;
+        }
+        
+        .info-grid dd {
+            margin: 0;
+            color: var(--text-primary);
+        }
+        
+        .monospace {
+            font-family: 'Courier New', monospace;
+        }
+        
+        /* Clickable train rows */
+        .train-row {
+            cursor: pointer;
+        }
+        
+        .train-row:hover {
+            background: var(--bg-tertiary) !important;
+        }
+        
+        /* Mobile Optimization for Service Detail */
+        @media (max-width: 768px) {
+            .service-title {
+                font-size: 1.4rem;
+            }
+            
+            .timeline-marker {
+                width: 30px;
+            }
+            
+            .marker-icon {
+                width: 24px;
+                height: 24px;
+                font-size: 0.875rem;
+            }
+            
+            .stop-name {
+                font-size: 1rem;
+            }
+            
+            .stop-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+            
+            .time-label {
+                min-width: 70px;
+            }
+            
+            .service-info-card {
+                padding: 1rem;
+            }
+            
+            .info-grid {
+                gap: 0.5rem 1rem;
+            }
+        }
     </style>
     <script src="/static/js/htmx.min.js"></script>
 </head>
@@ -488,16 +825,7 @@
         <div class="timestamp">Updated at: <span id="update-time">{{ timestamp }}</span></div>
         {% endblock %}
         
-        <div style="margin-top: 0.5rem; font-size: 0.75rem; color: var(--text-secondary);">
-            Station data © 
-            <a href="https://github.com/davwheat/uk-railway-stations" 
-               target="_blank" 
-               rel="noopener"
-               style="color: var(--accent); text-decoration: none;">
-                davwheat
-            </a>, 
-            Trainline EU, OpenStreetMap contributors
-        </div>
+
     </footer>
 </body>
 </html>
