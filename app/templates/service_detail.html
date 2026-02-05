@@ -46,10 +46,9 @@
     </div>
     {% endif %}
     
-    <!-- Service Timeline (auto-refreshing) -->
+    <!-- Service Timeline -->
     <div id="service-timeline"
          hx-get="/service/{{ service.serviceID }}/refresh"
-         hx-trigger="every 60s"
          hx-swap="innerHTML">
         {% include "partials/service_timeline.html" %}
     </div>
