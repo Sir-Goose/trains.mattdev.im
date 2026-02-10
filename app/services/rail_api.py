@@ -1,8 +1,35 @@
-import httpx
+import logging
+from dataclasses import dataclass
 from typing import Optional
+
+import httpx
+
 from app.config import settings
-from app.models.board import Board, Train, ServiceDetails
 from app.middleware.cache import cache
+from app.models.board import Board, Train
+
+
+logger = logging.getLogger(__name__)
+
+
+class BoardNotFoundError(Exception):
+    """Raised when a CRS code cannot be resolved to a station board."""
+
+
+class RailAPIError(Exception):
+    """Raised when the upstream rail API is unavailable or invalid."""
+
+    def __init__(self, message: str, status_code: int = 503):
+        super().__init__(message)
+        self.status_code = status_code
+
+
+@dataclass
+class BoardFetchResult:
+    """Result object that includes board data and cache provenance."""
+
+    board: Board
+    from_cache: bool
 
 
 class RailAPIService:
@@ -20,7 +47,7 @@ class RailAPIService:
             'User-Agent': 'LeatherheadLive/1.0'
         }
     
-    async def get_board(self, crs_code: str, use_cache: bool = True) -> Optional[Board]:
+    async def get_board(self, crs_code: str, use_cache: bool = True) -> BoardFetchResult:
         """
         Get arrival and departure board for a station
         
@@ -29,7 +56,7 @@ class RailAPIService:
             use_cache: Whether to use cached data if available
         
         Returns:
-            Board object or None if error
+            BoardFetchResult with board payload and cache-hit metadata
         """
         crs_code = crs_code.upper()
         cache_key = f"board:{crs_code}"
@@ -38,7 +65,7 @@ class RailAPIService:
         if use_cache:
             cached_board = cache.get(cache_key)
             if cached_board:
-                return cached_board
+                return BoardFetchResult(board=cached_board, from_cache=True)
         
         # Fetch from API using regular endpoint (not WithDetails) to get up to 150 trains
         # Details will be fetched on-demand for individual services
@@ -49,37 +76,72 @@ class RailAPIService:
             "timeOffset": 0  # Start from now
         }
         
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            try:
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
                 response = await client.get(url, headers=self._get_headers(), params=params)
                 response.raise_for_status()
-                
+
+            try:
                 data = response.json()
-                
-                # Check if data is valid
-                if not data:
-                    return None
-                
-                # Parse into Board model
-                board = self._parse_board(data)
-                
-                # Cache the result
-                cache.set(cache_key, board, self.cache_ttl)
-                
-                return board
-                
-            except httpx.HTTPStatusError as e:
-                print(f"HTTP error fetching board for {crs_code}: {e.response.status_code}")
-                return None
-            except httpx.RequestError as e:
-                print(f"Request error fetching board for {crs_code}: {e}")
-                return None
-            except Exception as e:
-                print(f"Unexpected error fetching board for {crs_code}: {e}")
-                return None
+            except ValueError as exc:
+                logger.warning("Invalid JSON from rail API for %s", crs_code)
+                raise RailAPIError(
+                    "Rail data service returned an invalid response.",
+                    status_code=502,
+                ) from exc
+
+            if not data:
+                raise BoardNotFoundError(
+                    f"Could not fetch board data for station '{crs_code}'. Please check the CRS code is valid."
+                )
+
+            board = self._parse_board(data)
+
+            # Defensive guard for malformed success payloads
+            if not board.location_name and not board.crs:
+                raise BoardNotFoundError(
+                    f"Could not fetch board data for station '{crs_code}'. Please check the CRS code is valid."
+                )
+
+            cache.set(cache_key, board, self.cache_ttl)
+            return BoardFetchResult(board=board, from_cache=False)
+
+        except httpx.HTTPStatusError as exc:
+            status_code = exc.response.status_code
+            if status_code in {400, 404}:
+                raise BoardNotFoundError(
+                    f"Could not fetch board data for station '{crs_code}'. Please check the CRS code is valid."
+                ) from exc
+            if status_code in {401, 403}:
+                raise RailAPIError(
+                    "Rail data service authentication failed.",
+                    status_code=503,
+                ) from exc
+            if 500 <= status_code < 600:
+                raise RailAPIError(
+                    "Rail data service is temporarily unavailable.",
+                    status_code=503,
+                ) from exc
+            raise RailAPIError(
+                "Rail data service returned an unexpected response.",
+                status_code=502,
+            ) from exc
+        except httpx.RequestError as exc:
+            raise RailAPIError(
+                "Unable to reach rail data service.",
+                status_code=503,
+            ) from exc
+        except (BoardNotFoundError, RailAPIError):
+            raise
+        except Exception as exc:
+            logger.exception("Unexpected error fetching board for %s", crs_code)
+            raise RailAPIError(
+                "Unexpected error fetching board data.",
+                status_code=502,
+            ) from exc
     
     def _parse_board(self, data: dict) -> Board:
-        """Parse API response into Board model and cache service details"""
+        """Parse API response into Board model."""
         # Extract train services if they exist
         train_services = data.get('trainServices', [])
         
@@ -89,8 +151,8 @@ class RailAPIService:
             try:
                 train = Train(**train_data)
                 trains.append(train)
-            except Exception as e:
-                print(f"Error parsing train data: {e}")
+            except Exception as exc:
+                logger.warning("Error parsing train data: %s", exc)
                 continue
         
         # Create board

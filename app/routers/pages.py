@@ -3,7 +3,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from datetime import datetime
 from typing import Optional
-from app.services.rail_api import rail_api_service
+from app.services.rail_api import BoardNotFoundError, RailAPIError, rail_api_service
 from app.middleware.cache import cache
 
 router = APIRouter()
@@ -34,35 +34,24 @@ async def get_board_data(crs: str, view: str):
     Fetch board data for a specific view with total train count
     Returns: (trains_for_view, total_trains, station_name, error_flag)
     """
+    cache_key = f"board:{crs}"
+
     try:
-        board = await rail_api_service.get_board(crs, use_cache=True)
-        
-        if not board:
-            # Try to get from cache one more time
-            cache_key = f"board:{crs}"
-            board = cache.get(cache_key)
-            if not board:
-                raise HTTPException(status_code=404, detail=f"Station {crs} not found")
-        
-        # Get trains for specific view and total count
+        result = await rail_api_service.get_board(crs, use_cache=True)
+        board = result.board
         trains_for_view = get_trains_for_view(board, view)
         total_trains = len(board.trains)
-        
         return trains_for_view, total_trains, board.location_name, False
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        # API error - try to return cached data
-        cache_key = f"board:{crs}"
+    except BoardNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except RailAPIError:
+        # Upstream failed - try to keep UI alive with cached data
         cached_board = cache.get(cache_key)
-        
         if cached_board:
             trains_for_view = get_trains_for_view(cached_board, view)
             total_trains = len(cached_board.trains)
-            return trains_for_view, total_trains, cached_board.location_name, True  # error flag
-        else:
-            raise HTTPException(status_code=500, detail="Service temporarily unavailable")
+            return trains_for_view, total_trains, cached_board.location_name, True
+        raise HTTPException(status_code=500, detail="Service temporarily unavailable")
 
 
 @router.get("/", response_class=HTMLResponse)

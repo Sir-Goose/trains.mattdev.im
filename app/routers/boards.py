@@ -1,11 +1,26 @@
 from typing import List
 from fastapi import APIRouter, HTTPException, Query
-from app.models.board import Board, Train, BoardResponse
-from app.services.rail_api import rail_api_service
+from app.models.board import Train, BoardResponse
 from app.middleware.cache import cache
+from app.services.rail_api import (
+    BoardFetchResult,
+    BoardNotFoundError,
+    RailAPIError,
+    rail_api_service,
+)
 
 
 router = APIRouter(prefix="/api/boards", tags=["boards"])
+
+
+async def fetch_board_or_raise(crs_code: str, use_cache: bool) -> BoardFetchResult:
+    """Fetch board data and map service errors to API HTTP responses."""
+    try:
+        return await rail_api_service.get_board(crs_code, use_cache=use_cache)
+    except BoardNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except RailAPIError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
 
 
 @router.get("/{crs_code}", response_model=BoardResponse)
@@ -23,22 +38,12 @@ async def get_board(
     Returns:
         Board data with all train services
     """
-    board = await rail_api_service.get_board(crs_code, use_cache=use_cache)
-    
-    if not board:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Could not fetch board data for station '{crs_code}'. Please check the CRS code is valid."
-        )
-    
-    # Check if data was from cache
-    cache_key = f"board:{crs_code.upper()}"
-    cached = cache.get(cache_key) is not None
+    result = await fetch_board_or_raise(crs_code, use_cache)
     
     return BoardResponse(
         success=True,
-        data=board,
-        cached=cached
+        data=result.board,
+        cached=result.from_cache
     )
 
 
@@ -57,15 +62,8 @@ async def get_departures(
     Returns:
         List of departing trains
     """
-    board = await rail_api_service.get_board(crs_code, use_cache=use_cache)
-    
-    if not board:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Could not fetch board data for station '{crs_code}'"
-        )
-    
-    return board.departures
+    result = await fetch_board_or_raise(crs_code, use_cache)
+    return result.board.departures
 
 
 @router.get("/{crs_code}/arrivals", response_model=List[Train])
@@ -83,15 +81,8 @@ async def get_arrivals(
     Returns:
         List of arriving trains
     """
-    board = await rail_api_service.get_board(crs_code, use_cache=use_cache)
-    
-    if not board:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Could not fetch board data for station '{crs_code}'"
-        )
-    
-    return board.arrivals
+    result = await fetch_board_or_raise(crs_code, use_cache)
+    return result.board.arrivals
 
 
 @router.get("/{crs_code}/passing", response_model=List[Train])
@@ -109,15 +100,8 @@ async def get_passing_through(
     Returns:
         List of trains passing through
     """
-    board = await rail_api_service.get_board(crs_code, use_cache=use_cache)
-    
-    if not board:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Could not fetch board data for station '{crs_code}'"
-        )
-    
-    return board.passing_through
+    result = await fetch_board_or_raise(crs_code, use_cache)
+    return result.board.passing_through
 
 
 @router.delete("/{crs_code}/cache")
