@@ -671,13 +671,6 @@
             border: 1px solid var(--border);
         }
         
-        .current-position-label {
-            margin-bottom: 0.5rem;
-            color: var(--accent);
-            font-weight: 500;
-            font-size: 0.9rem;
-        }
-        
         .next-stop-badge {
             display: inline-block;
             background: rgba(234, 179, 8, 0.2);
@@ -773,11 +766,21 @@
         
         /* Clickable train rows */
         .train-row {
-            cursor: pointer;
+            cursor: default;
         }
         
-        .train-row:hover {
+        .train-row-clickable {
+            cursor: pointer;
+        }
+
+        .train-row-clickable:hover {
             background: var(--bg-tertiary) !important;
+        }
+
+        .route-unavailable {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.2rem;
         }
         
         /* Mobile Optimization for Service Detail */

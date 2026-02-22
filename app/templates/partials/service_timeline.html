@@ -21,12 +21,12 @@
                 <div class="time-row">
                     <span class="time-label">Arrival:</span>
                     <span class="time-value">
-                        {% if stop.ata %}
+                        {% if stop.ata and stop.ata != "On time" %}
                             {{ stop.ata }} <span class="actual-badge">Actual</span>
                         {% elif stop.eta and stop.eta != "On time" %}
                             <span class="scheduled-time">{{ stop.pta or stop.st }}</span> → {{ stop.eta }}
                         {% else %}
-                            {{ stop.pta or stop.st }}
+                            {{ stop.pta or stop.st }} <span class="ontime-text">On time</span>
                         {% endif %}
                     </span>
                 </div>
@@ -36,12 +36,12 @@
                 <div class="time-row">
                     <span class="time-label">Departure:</span>
                     <span class="time-value">
-                        {% if stop.at %}
+                        {% if stop.at and stop.at != "On time" %}
                             {{ stop.at }} <span class="actual-badge">Actual</span>
                         {% elif stop.et and stop.et != "On time" %}
                             <span class="scheduled-time">{{ stop.st }}</span> → {{ stop.et }}
                         {% else %}
-                            {{ stop.st }}
+                            {{ stop.st }} <span class="ontime-text">On time</span>
                         {% endif %}
                     </span>
                 </div>
@@ -54,7 +54,7 @@
     <!-- Current Station -->
     <div class="timeline-stop current-stop">
         <div class="timeline-marker">
-            <div class="marker-icon marker-current">🚆</div>
+            <div class="marker-icon marker-current">●</div>
             {% if all_subsequent %}
             <div class="timeline-line"></div>
             {% endif %}
@@ -66,16 +66,12 @@
                 <span class="stop-crs">{{ service.crs }}</span>
             </div>
             
-            <div class="current-position-label">
-                <span>🔹 Train is currently here</span>
-            </div>
-            
             <div class="stop-times">
                 {% if service.sta or service.eta or service.ata %}
                 <div class="time-row">
                     <span class="time-label">Arrival:</span>
                     <span class="time-value">
-                        {% if service.ata %}
+                        {% if service.ata and service.ata != "On time" %}
                             {{ service.ata }} <span class="actual-badge">Actual</span>
                         {% elif service.eta and service.eta != "On time" %}
                             <span class="scheduled-time">{{ service.sta }}</span> → {{ service.eta }}
@@ -90,7 +86,7 @@
                 <div class="time-row">
                     <span class="time-label">Departure:</span>
                     <span class="time-value">
-                        {% if service.atd %}
+                        {% if service.atd and service.atd != "On time" %}
                             {{ service.atd }} <span class="actual-badge">Actual</span>
                         {% elif service.etd and service.etd != "On time" %}
                             <span class="scheduled-time">{{ service.std }}</span> → {{ service.etd }}
@@ -128,10 +124,12 @@
                 <div class="time-row">
                     <span class="time-label">Arrival:</span>
                     <span class="time-value">
-                        {% if stop.eta and stop.eta != "On time" %}
+                        {% if stop.ata and stop.ata != "On time" %}
+                            {{ stop.ata }} <span class="actual-badge">Actual</span>
+                        {% elif stop.eta and stop.eta != "On time" %}
                             <span class="scheduled-time">{{ stop.pta or stop.st }}</span> → {{ stop.eta }}
                         {% else %}
-                            {{ stop.pta or stop.st }}
+                            {{ stop.pta or stop.st }} <span class="ontime-text">On time</span>
                         {% endif %}
                     </span>
                 </div>
@@ -141,10 +139,12 @@
                 <div class="time-row">
                     <span class="time-label">Departure:</span>
                     <span class="time-value">
-                        {% if stop.et and stop.et != "On time" %}
+                        {% if stop.at and stop.at != "On time" %}
+                            {{ stop.at }} <span class="actual-badge">Actual</span>
+                        {% elif stop.et and stop.et != "On time" %}
                             <span class="scheduled-time">{{ stop.st }}</span> → <span class="status-delayed">{{ stop.et }}</span>
                         {% else %}
-                            {{ stop.st }}
+                            {{ stop.st }} <span class="ontime-text">On time</span>
                         {% endif %}
                     </span>
                 </div>

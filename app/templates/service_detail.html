@@ -48,7 +48,7 @@
     
     <!-- Service Timeline -->
     <div id="service-timeline"
-         hx-get="/service/{{ service.serviceID }}/refresh"
+         hx-get="/service/{{ service.crs }}/{{ service.serviceID }}/refresh"
          hx-swap="innerHTML">
         {% include "partials/service_timeline.html" %}
     </div>
