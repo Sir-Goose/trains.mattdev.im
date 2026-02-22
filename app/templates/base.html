@@ -616,12 +616,6 @@
             border: 2px solid var(--border);
         }
         
-        .marker-passed {
-            background: var(--success);
-            border-color: var(--success);
-            color: white;
-        }
-        
         .marker-current {
             background: var(--accent);
             border-color: var(--accent);
@@ -629,7 +623,8 @@
             animation: pulse 2s infinite;
         }
         
-        .marker-upcoming {
+        .marker-before,
+        .marker-after {
             background: var(--bg-secondary);
             border-color: var(--border);
             color: var(--text-secondary);
@@ -649,10 +644,6 @@
             flex-grow: 1;
             background: var(--border);
             min-height: 40px;
-        }
-        
-        .passed-stop .timeline-line {
-            background: var(--success);
         }
         
         /* Stop Details */
@@ -680,10 +671,6 @@
             color: var(--text-primary);
         }
         
-        .passed-stop .stop-name {
-            color: var(--text-secondary);
-        }
-        
         .stop-crs {
             font-family: 'Courier New', monospace;
             color: var(--text-secondary);
@@ -695,6 +682,18 @@
             border: 1px solid var(--border);
         }
         
+        .route-section-label {
+            font-size: 0.75rem;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin: 0.25rem 0 0.75rem 3.5rem;
+        }
+
+        .route-section-label-inline {
+            margin: 0 0 0.5rem 0;
+        }
+
         .next-stop-badge {
             display: inline-block;
             background: rgba(234, 179, 8, 0.2);
@@ -726,10 +725,6 @@
         .time-value {
             color: var(--text-primary);
             font-weight: 500;
-        }
-        
-        .passed-stop .time-value {
-            color: var(--text-secondary);
         }
         
         .scheduled-time {

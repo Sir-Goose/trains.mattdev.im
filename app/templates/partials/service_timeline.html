@@ -2,11 +2,15 @@
     {% set all_previous = service.all_previous_stops %}
     {% set all_subsequent = service.all_subsequent_stops %}
     
-    <!-- Previous Stops (where train has been) -->
+    {% if all_previous %}
+    <div class="route-section-label">Stops before {{ service.locationName }}</div>
+    {% endif %}
+
+    <!-- Stops before selected board station -->
     {% for stop in all_previous %}
-    <div class="timeline-stop passed-stop">
+    <div class="timeline-stop before-board-stop">
         <div class="timeline-marker">
-            <div class="marker-icon marker-passed">✓</div>
+            <div class="marker-icon marker-before">○</div>
             <div class="timeline-line"></div>
         </div>
         
@@ -51,7 +55,7 @@
     </div>
     {% endfor %}
     
-    <!-- Current Station -->
+    <!-- Selected board station -->
     <div class="timeline-stop current-stop">
         <div class="timeline-marker">
             <div class="marker-icon marker-current">●</div>
@@ -65,6 +69,8 @@
                 <h3 class="stop-name">{{ service.locationName }}</h3>
                 <span class="stop-crs">{{ service.crs }}</span>
             </div>
+
+            <div class="route-section-label route-section-label-inline">Selected board station</div>
             
             <div class="stop-times">
                 {% if service.sta or service.eta or service.ata %}
@@ -100,11 +106,15 @@
         </div>
     </div>
     
-    <!-- Upcoming Stops -->
+    {% if all_subsequent %}
+    <div class="route-section-label">Stops after {{ service.locationName }}</div>
+    {% endif %}
+
+    <!-- Stops after selected board station -->
     {% for stop in all_subsequent %}
-    <div class="timeline-stop upcoming-stop">
+    <div class="timeline-stop after-board-stop">
         <div class="timeline-marker">
-            <div class="marker-icon marker-upcoming">○</div>
+            <div class="marker-icon marker-after">○</div>
             {% if not loop.last %}
             <div class="timeline-line"></div>
             {% endif %}
@@ -114,9 +124,6 @@
             <div class="stop-header">
                 <h3 class="stop-name">{{ stop.locationName }}</h3>
                 <span class="stop-crs">{{ stop.crs }}</span>
-                {% if loop.first %}
-                <span class="next-stop-badge">Next Stop</span>
-                {% endif %}
             </div>
             
             <div class="stop-times">
