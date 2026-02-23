@@ -48,6 +48,23 @@ class RailAPIService:
         self.base_url = settings.rail_api_base_url
         self.api_key = settings.rail_api_key
         self.cache_ttl = settings.cache_ttl_seconds
+        self._client: Optional[httpx.AsyncClient] = None
+
+    async def startup(self) -> None:
+        """Initialize shared HTTP client for outbound rail API requests."""
+        await self._get_client()
+
+    async def shutdown(self) -> None:
+        """Close shared HTTP client cleanly."""
+        if self._client is not None and not self._client.is_closed:
+            await self._client.aclose()
+        self._client = None
+
+    async def _get_client(self) -> httpx.AsyncClient:
+        """Get or lazily create the shared HTTP client."""
+        if self._client is None or self._client.is_closed:
+            self._client = httpx.AsyncClient(timeout=10.0)
+        return self._client
     
     def _get_headers(self) -> dict:
         """Get headers for API requests"""
@@ -179,9 +196,9 @@ class RailAPIService:
         }
 
         try:
-            async with httpx.AsyncClient(timeout=10.0) as client:
-                response = await client.get(url, headers=self._get_headers(), params=params)
-                response.raise_for_status()
+            client = await self._get_client()
+            response = await client.get(url, headers=self._get_headers(), params=params)
+            response.raise_for_status()
 
             try:
                 data = response.json()
@@ -269,9 +286,9 @@ class RailAPIService:
         }
         
         try:
-            async with httpx.AsyncClient(timeout=10.0) as client:
-                response = await client.get(url, headers=self._get_headers(), params=params)
-                response.raise_for_status()
+            client = await self._get_client()
+            response = await client.get(url, headers=self._get_headers(), params=params)
+            response.raise_for_status()
 
             try:
                 data = response.json()

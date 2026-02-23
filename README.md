@@ -278,7 +278,7 @@ The API returns appropriate HTTP status codes:
 
 ## Development
 
-### Running Tests (Future)
+### Running Tests
 ```bash
 pytest
 ```

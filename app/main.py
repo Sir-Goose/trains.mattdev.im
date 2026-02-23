@@ -4,8 +4,19 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from contextlib import asynccontextmanager
 from app.config import settings
 from app.routers import boards, pages, stations
+from app.services.rail_api import rail_api_service
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    await rail_api_service.startup()
+    try:
+        yield
+    finally:
+        await rail_api_service.shutdown()
 
 
 # Create FastAPI application
@@ -14,7 +25,8 @@ app = FastAPI(
     version=settings.app_version,
     description="API for UK National Rail live departure and arrival boards",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
+    lifespan=lifespan,
 )
 
 # Configure Jinja2 templates
