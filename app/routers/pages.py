@@ -1,32 +1,13 @@
 from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from datetime import datetime
 from typing import Optional
 from app.services.rail_api import BoardNotFoundError, RailAPIError, rail_api_service
 from app.middleware.cache import cache
+from app.utils.time import current_time_hms, format_updated_at
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
-
-def get_timestamp() -> str:
-    """Get current timestamp in HH:MM:SS format"""
-    return datetime.now().strftime("%H:%M:%S")
-
-def format_board_update_timestamp(raw_timestamp: Optional[str]) -> str:
-    """Format board data timestamp for display in HH:MM:SS."""
-    if not raw_timestamp:
-        return get_timestamp()
-
-    normalized = raw_timestamp.strip()
-    if normalized.endswith("Z"):
-        normalized = normalized[:-1] + "+00:00"
-
-    try:
-        parsed = datetime.fromisoformat(normalized)
-        return parsed.strftime("%H:%M:%S")
-    except ValueError:
-        return raw_timestamp
 
 def validate_crs(crs: str) -> str:
     """Validate and normalize CRS code"""
@@ -56,7 +37,7 @@ async def get_board_data(crs: str, view: str):
         board = result.board
         trains_for_view = get_trains_for_view(board, view)
         total_trains = len(board.trains)
-        updated_timestamp = format_board_update_timestamp(board.pulled_at or board.generated_at)
+        updated_timestamp = format_updated_at(board.pulled_at or board.generated_at)
         return trains_for_view, total_trains, board.location_name, False, updated_timestamp
     except BoardNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
@@ -68,7 +49,7 @@ async def get_board_data(crs: str, view: str):
                 cached_board = rail_api_service._parse_board(cached_board)
             trains_for_view = get_trains_for_view(cached_board, view)
             total_trains = len(cached_board.trains)
-            updated_timestamp = format_board_update_timestamp(
+            updated_timestamp = format_updated_at(
                 cached_board.pulled_at or cached_board.generated_at
             )
             return trains_for_view, total_trains, cached_board.location_name, True, updated_timestamp
@@ -82,7 +63,7 @@ async def index(request: Request):
         "index.html",
         {
             "request": request,
-            "timestamp": get_timestamp()
+            "timestamp": current_time_hms()
         }
     )
 
@@ -111,7 +92,7 @@ async def service_detail_page(request: Request, crs: str, service_id: str):
             {
                 "request": request,
                 "service_id": service_id,
-                "timestamp": get_timestamp(),
+                "timestamp": current_time_hms(),
             },
             status_code=404,
         )
@@ -121,7 +102,7 @@ async def service_detail_page(request: Request, crs: str, service_id: str):
         {
             "request": request,
             "service": service,
-            "timestamp": get_timestamp(),
+            "timestamp": format_updated_at(service.pulledAt or service.generatedAt),
         },
     )
 
@@ -143,7 +124,7 @@ async def service_detail_refresh(request: Request, crs: str, service_id: str):
         {
             "request": request,
             "service": service,
-            "timestamp": get_timestamp(),
+            "timestamp": format_updated_at(service.pulledAt or service.generatedAt),
         },
     )
 

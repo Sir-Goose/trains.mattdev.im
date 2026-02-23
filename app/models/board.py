@@ -261,6 +261,7 @@ class CallingPointList(BaseModel):
 class ServiceDetails(BaseModel):
     """Detailed information about a specific train service"""
     generatedAt: str
+    pulledAt: Optional[str] = None
     serviceType: str = "train"  # "train" or "bus"
     locationName: str  # Station name
     crs: str  # Station CRS

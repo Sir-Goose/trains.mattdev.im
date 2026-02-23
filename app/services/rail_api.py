@@ -51,6 +51,11 @@ class RailAPIService:
     def _current_timestamp_iso(self) -> str:
         """Get current UTC timestamp in ISO-8601 format."""
         return datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+    def _stamp_pulled_at(self, payload: dict) -> dict:
+        """Attach pull timestamp to fetched payload."""
+        payload["pulledAt"] = self._current_timestamp_iso()
+        return payload
     
     async def get_board(self, crs_code: str, use_cache: bool = True) -> BoardFetchResult:
         """
@@ -106,7 +111,7 @@ class RailAPIService:
 
             # Track when we actually pulled this payload, so UI timestamps stay
             # aligned with cache freshness rather than page render time.
-            data["pulledAt"] = self._current_timestamp_iso()
+            data = self._stamp_pulled_at(data)
             board = self._parse_board(data)
 
             # Defensive guard for malformed success payloads
@@ -194,6 +199,7 @@ class RailAPIService:
                         f"Could not fetch board data for station '{crs_code}'. Please check the CRS code is valid."
                     )
 
+                data = self._stamp_pulled_at(data)
                 cache.set(cache_key, data, details_cache_ttl)
 
             except httpx.HTTPStatusError as exc:
@@ -240,6 +246,7 @@ class RailAPIService:
 
         service_payload = {
             "generatedAt": data.get("generatedAt"),
+            "pulledAt": data.get("pulledAt"),
             "locationName": data.get("locationName"),
             "crs": data.get("crs"),
             **matching_service,
