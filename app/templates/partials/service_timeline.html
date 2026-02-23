@@ -31,7 +31,7 @@
                 <div class="time-row">
                     <span class="time-label">Arrival:</span>
                     <span class="time-value">
-                        {% if stop.ata and stop.ata != "On time" %}
+                        {% if stop.ata and stop.ata|trim|lower not in ["on time", "no report"] %}
                             {{ stop.ata }} <span class="actual-badge">Actual</span>
                         {% elif stop.eta and stop.eta != "On time" %}
                             <span class="scheduled-time">{{ stop.pta or stop.st }}</span> → {{ stop.eta }}
@@ -46,7 +46,7 @@
                 <div class="time-row">
                     <span class="time-label">Departure:</span>
                     <span class="time-value">
-                        {% if stop.at and stop.at != "On time" %}
+                        {% if stop.at and stop.at|trim|lower not in ["on time", "no report"] %}
                             {{ stop.at }} <span class="actual-badge">Actual</span>
                         {% elif stop.et and stop.et != "On time" %}
                             <span class="scheduled-time">{{ stop.st }}</span> → {{ stop.et }}
@@ -88,7 +88,7 @@
                 <div class="time-row">
                     <span class="time-label">Arrival:</span>
                     <span class="time-value">
-                        {% if service.ata and service.ata != "On time" %}
+                        {% if service.ata and service.ata|trim|lower not in ["on time", "no report"] %}
                             {{ service.ata }} <span class="actual-badge">Actual</span>
                         {% elif service.eta and service.eta != "On time" %}
                             <span class="scheduled-time">{{ service.sta }}</span> → {{ service.eta }}
@@ -103,7 +103,7 @@
                 <div class="time-row">
                     <span class="time-label">Departure:</span>
                     <span class="time-value">
-                        {% if service.atd and service.atd != "On time" %}
+                        {% if service.atd and service.atd|trim|lower not in ["on time", "no report"] %}
                             {{ service.atd }} <span class="actual-badge">Actual</span>
                         {% elif service.etd and service.etd != "On time" %}
                             <span class="scheduled-time">{{ service.std }}</span> → {{ service.etd }}
@@ -145,7 +145,7 @@
                 <div class="time-row">
                     <span class="time-label">Arrival:</span>
                     <span class="time-value">
-                        {% if stop.ata and stop.ata != "On time" %}
+                        {% if stop.ata and stop.ata|trim|lower not in ["on time", "no report"] %}
                             {{ stop.ata }} <span class="actual-badge">Actual</span>
                         {% elif stop.eta and stop.eta != "On time" %}
                             <span class="scheduled-time">{{ stop.pta or stop.st }}</span> → {{ stop.eta }}
@@ -160,7 +160,7 @@
                 <div class="time-row">
                     <span class="time-label">Departure:</span>
                     <span class="time-value">
-                        {% if stop.at and stop.at != "On time" %}
+                        {% if stop.at and stop.at|trim|lower not in ["on time", "no report"] %}
                             {{ stop.at }} <span class="actual-badge">Actual</span>
                         {% elif stop.et and stop.et != "On time" %}
                             <span class="scheduled-time">{{ stop.st }}</span> → <span class="status-delayed">{{ stop.et }}</span>
