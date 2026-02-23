@@ -13,6 +13,21 @@ def get_timestamp() -> str:
     """Get current timestamp in HH:MM:SS format"""
     return datetime.now().strftime("%H:%M:%S")
 
+def format_board_update_timestamp(raw_timestamp: Optional[str]) -> str:
+    """Format board data timestamp for display in HH:MM:SS."""
+    if not raw_timestamp:
+        return get_timestamp()
+
+    normalized = raw_timestamp.strip()
+    if normalized.endswith("Z"):
+        normalized = normalized[:-1] + "+00:00"
+
+    try:
+        parsed = datetime.fromisoformat(normalized)
+        return parsed.strftime("%H:%M:%S")
+    except ValueError:
+        return raw_timestamp
+
 def validate_crs(crs: str) -> str:
     """Validate and normalize CRS code"""
     if not crs or len(crs) != 3 or not crs.isalpha():
@@ -32,7 +47,7 @@ def get_trains_for_view(board, view: str):
 async def get_board_data(crs: str, view: str):
     """
     Fetch board data for a specific view with total train count
-    Returns: (trains_for_view, total_trains, station_name, error_flag)
+    Returns: (trains_for_view, total_trains, station_name, error_flag, updated_timestamp)
     """
     cache_key = f"board:{crs}"
 
@@ -41,16 +56,22 @@ async def get_board_data(crs: str, view: str):
         board = result.board
         trains_for_view = get_trains_for_view(board, view)
         total_trains = len(board.trains)
-        return trains_for_view, total_trains, board.location_name, False
+        updated_timestamp = format_board_update_timestamp(board.pulled_at or board.generated_at)
+        return trains_for_view, total_trains, board.location_name, False, updated_timestamp
     except BoardNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except RailAPIError:
         # Upstream failed - try to keep UI alive with cached data
         cached_board = cache.get(cache_key)
         if cached_board:
+            if isinstance(cached_board, dict):
+                cached_board = rail_api_service._parse_board(cached_board)
             trains_for_view = get_trains_for_view(cached_board, view)
             total_trains = len(cached_board.trains)
-            return trains_for_view, total_trains, cached_board.location_name, True
+            updated_timestamp = format_board_update_timestamp(
+                cached_board.pulled_at or cached_board.generated_at
+            )
+            return trains_for_view, total_trains, cached_board.location_name, True, updated_timestamp
         raise HTTPException(status_code=500, detail="Service temporarily unavailable")
 
 
@@ -145,7 +166,7 @@ async def board_view(request: Request, crs: str, view: str):
     if view not in ['departures', 'arrivals', 'passing']:
         raise HTTPException(status_code=404, detail="Invalid view")
     
-    trains, total_trains, station_name, error = await get_board_data(crs, view)
+    trains, total_trains, station_name, error, updated_timestamp = await get_board_data(crs, view)
     
     return templates.TemplateResponse(
         "board.html",
@@ -157,7 +178,7 @@ async def board_view(request: Request, crs: str, view: str):
             "trains": trains,
             "total_trains": total_trains,
             "error": error,
-            "timestamp": get_timestamp()
+            "timestamp": updated_timestamp
         }
     )
 
@@ -173,7 +194,7 @@ async def board_content(request: Request, crs: str, view: str):
     if view not in ['departures', 'arrivals', 'passing']:
         raise HTTPException(status_code=404, detail="Invalid view")
     
-    trains, total_trains, station_name, error = await get_board_data(crs, view)
+    trains, total_trains, station_name, error, updated_timestamp = await get_board_data(crs, view)
     
     # Render tabs with updated active state
     tabs_html = templates.get_template("partials/tabs.html").render(
@@ -188,7 +209,7 @@ async def board_content(request: Request, crs: str, view: str):
         view=view,
         trains=trains,
         error=error,
-        timestamp=get_timestamp()
+        timestamp=updated_timestamp
     )
     
     # Render search form with updated view parameter
@@ -214,7 +235,7 @@ async def board_refresh(request: Request, crs: str, view: str):
         return HTMLResponse(status_code=204)
     
     try:
-        trains, total_trains, station_name, error = await get_board_data(crs, view)
+        trains, total_trains, station_name, error, updated_timestamp = await get_board_data(crs, view)
         
         return templates.TemplateResponse(
             f"partials/{view}_table.html",
@@ -223,7 +244,7 @@ async def board_refresh(request: Request, crs: str, view: str):
                 "crs": crs,
                 "trains": trains,
                 "error": error,
-                "timestamp": get_timestamp()
+                "timestamp": updated_timestamp
             }
         )
     except Exception:

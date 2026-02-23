@@ -158,6 +158,7 @@ class Board(BaseModel):
     location_name: Optional[str] = Field(None, alias='locationName')
     crs: Optional[str] = None
     generated_at: Optional[str] = Field(None, alias='generatedAt')
+    pulled_at: Optional[str] = Field(None, alias='pulledAt')
     filter_type: Optional[str] = Field(None, alias='filterType')  # Usually "to" or "from"
     platform_available: bool = Field(True, alias='platformAvailable')
     are_services_available: bool = Field(True, alias='areServicesAvailable')

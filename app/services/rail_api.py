@@ -1,5 +1,6 @@
 import logging
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from typing import Optional
 
 import httpx
@@ -46,6 +47,10 @@ class RailAPIService:
             'x-apikey': self.api_key,
             'User-Agent': 'LeatherheadLive/1.0'
         }
+
+    def _current_timestamp_iso(self) -> str:
+        """Get current UTC timestamp in ISO-8601 format."""
+        return datetime.now(timezone.utc).isoformat(timespec="seconds")
     
     async def get_board(self, crs_code: str, use_cache: bool = True) -> BoardFetchResult:
         """
@@ -99,6 +104,9 @@ class RailAPIService:
                     f"Could not fetch board data for station '{crs_code}'. Please check the CRS code is valid."
                 )
 
+            # Track when we actually pulled this payload, so UI timestamps stay
+            # aligned with cache freshness rather than page render time.
+            data["pulledAt"] = self._current_timestamp_iso()
             board = self._parse_board(data)
 
             # Defensive guard for malformed success payloads
@@ -258,6 +266,7 @@ class RailAPIService:
             'locationName': data.get('locationName'),
             'crs': data.get('crs'),
             'generatedAt': data.get('generatedAt'),
+            'pulledAt': data.get('pulledAt'),
             'filterType': data.get('filterType'),
             'platformAvailable': data.get('platformAvailable', True),
             'areServicesAvailable': data.get('areServicesAvailable', True),
