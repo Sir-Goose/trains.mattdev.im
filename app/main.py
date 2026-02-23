@@ -87,7 +87,8 @@ async def health_check():
     return {
         "status": "healthy",
         "api_key_configured": bool(settings.rail_api_key),
-        "cache_ttl": settings.cache_ttl_seconds
+        "cache_ttl": settings.cache_ttl_seconds,
+        "cache_backend": settings.cache_backend,
     }
 
 

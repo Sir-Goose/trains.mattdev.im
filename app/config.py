@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     
     # Cache Configuration
     cache_ttl_seconds: int = 60
+    cache_backend: str = "memory"  # "memory" or "sqlite"
+    cache_sqlite_path: str = "/tmp/leatherheadlive_cache.sqlite3"
     
     # CORS Configuration
     cors_origins: list[str] = ["*"]

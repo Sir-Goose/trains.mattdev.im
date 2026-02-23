@@ -65,7 +65,11 @@ class RailAPIService:
         if use_cache:
             cached_board = cache.get(cache_key)
             if cached_board:
-                return BoardFetchResult(board=cached_board, from_cache=True)
+                if isinstance(cached_board, Board):
+                    return BoardFetchResult(board=cached_board, from_cache=True)
+                if isinstance(cached_board, dict):
+                    parsed_cached_board = self._parse_board(cached_board)
+                    return BoardFetchResult(board=parsed_cached_board, from_cache=True)
         
         # Fetch from API using regular endpoint (not WithDetails) to get up to 150 trains
         # Details will be fetched on-demand for individual services
@@ -103,7 +107,7 @@ class RailAPIService:
                     f"Could not fetch board data for station '{crs_code}'. Please check the CRS code is valid."
                 )
 
-            cache.set(cache_key, board, self.cache_ttl)
+            cache.set(cache_key, data, self.cache_ttl)
             return BoardFetchResult(board=board, from_cache=False)
 
         except httpx.HTTPStatusError as exc:
