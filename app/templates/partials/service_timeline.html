@@ -5,6 +5,7 @@
 
     {% for stop in all_previous %}
     {% set ns.index = ns.index + 1 %}
+    {% set stop_crs = (stop.crs or '')|trim|upper %}
     <div class="timeline-stop">
         <div class="timeline-marker">
             <div class="marker-icon marker-route">○</div>
@@ -15,8 +16,14 @@
 
         <div class="stop-details">
             <div class="stop-header">
+                {% if stop_crs and stop_crs|length == 3 %}
+                <a class="stop-link" href="/board/{{ stop_crs }}/departures">
+                    <h3 class="stop-name">{{ stop.locationName }}</h3>
+                </a>
+                <a class="stop-crs stop-crs-link" href="/board/{{ stop_crs }}/departures">{{ stop_crs }}</a>
+                {% else %}
                 <h3 class="stop-name">{{ stop.locationName }}</h3>
-                <span class="stop-crs">{{ stop.crs }}</span>
+                {% endif %}
             </div>
 
             <div class="stop-times">
@@ -55,6 +62,7 @@
     {% endfor %}
 
     {% set ns.index = ns.index + 1 %}
+    {% set service_crs = (service.crs or '')|trim|upper %}
     <div class="timeline-stop">
         <div class="timeline-marker">
             <div class="marker-icon marker-route">○</div>
@@ -65,8 +73,14 @@
 
         <div class="stop-details">
             <div class="stop-header">
+                {% if service_crs and service_crs|length == 3 %}
+                <a class="stop-link" href="/board/{{ service_crs }}/departures">
+                    <h3 class="stop-name">{{ service.locationName }}</h3>
+                </a>
+                <a class="stop-crs stop-crs-link" href="/board/{{ service_crs }}/departures">{{ service_crs }}</a>
+                {% else %}
                 <h3 class="stop-name">{{ service.locationName }}</h3>
-                <span class="stop-crs">{{ service.crs }}</span>
+                {% endif %}
             </div>
 
             <div class="stop-times">
@@ -105,6 +119,7 @@
 
     {% for stop in all_subsequent %}
     {% set ns.index = ns.index + 1 %}
+    {% set stop_crs = (stop.crs or '')|trim|upper %}
     <div class="timeline-stop">
         <div class="timeline-marker">
             <div class="marker-icon marker-route">○</div>
@@ -115,8 +130,14 @@
 
         <div class="stop-details">
             <div class="stop-header">
+                {% if stop_crs and stop_crs|length == 3 %}
+                <a class="stop-link" href="/board/{{ stop_crs }}/departures">
+                    <h3 class="stop-name">{{ stop.locationName }}</h3>
+                </a>
+                <a class="stop-crs stop-crs-link" href="/board/{{ stop_crs }}/departures">{{ stop_crs }}</a>
+                {% else %}
                 <h3 class="stop-name">{{ stop.locationName }}</h3>
-                <span class="stop-crs">{{ stop.crs }}</span>
+                {% endif %}
             </div>
 
             <div class="stop-times">
