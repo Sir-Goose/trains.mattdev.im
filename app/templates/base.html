@@ -616,27 +616,10 @@
             border: 2px solid var(--border);
         }
         
-        .marker-current {
-            background: var(--accent);
-            border-color: var(--accent);
-            font-size: 1.25rem;
-            animation: pulse 2s infinite;
-        }
-        
-        .marker-before,
-        .marker-after {
+        .marker-route {
             background: var(--bg-secondary);
             border-color: var(--border);
             color: var(--text-secondary);
-        }
-        
-        @keyframes pulse {
-            0%, 100% {
-                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
-            }
-            50% {
-                box-shadow: 0 0 0 8px rgba(59, 130, 246, 0);
-            }
         }
         
         .timeline-line {
@@ -682,29 +665,6 @@
             border: 1px solid var(--border);
         }
         
-        .route-section-label {
-            font-size: 0.75rem;
-            letter-spacing: 0.03em;
-            text-transform: uppercase;
-            color: var(--text-secondary);
-            margin: 0.25rem 0 0.75rem 3.5rem;
-        }
-
-        .route-section-label-inline {
-            margin: 0 0 0.5rem 0;
-        }
-
-        .next-stop-badge {
-            display: inline-block;
-            background: rgba(234, 179, 8, 0.2);
-            color: var(--warning);
-            font-size: 0.75rem;
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-        
         .stop-times {
             display: flex;
             flex-direction: column;
@@ -741,11 +701,6 @@
             border-radius: 4px;
             margin-left: 0.5rem;
             font-weight: 600;
-        }
-        
-        .ontime-text {
-            color: var(--success);
-            font-size: 0.875rem;
         }
         
         /* Service Info Card */

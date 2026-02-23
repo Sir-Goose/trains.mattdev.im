@@ -1,25 +1,24 @@
 <div class="journey-timeline">
     {% set all_previous = service.all_previous_stops %}
     {% set all_subsequent = service.all_subsequent_stops %}
-    
-    {% if all_previous %}
-    <div class="route-section-label">Stops before {{ service.locationName }}</div>
-    {% endif %}
+    {% set ns = namespace(index=0, total=(all_previous|length) + 1 + (all_subsequent|length)) %}
 
-    <!-- Stops before selected board station -->
     {% for stop in all_previous %}
-    <div class="timeline-stop before-board-stop">
+    {% set ns.index = ns.index + 1 %}
+    <div class="timeline-stop">
         <div class="timeline-marker">
-            <div class="marker-icon marker-before">○</div>
+            <div class="marker-icon marker-route">○</div>
+            {% if ns.index < ns.total %}
             <div class="timeline-line"></div>
+            {% endif %}
         </div>
-        
+
         <div class="stop-details">
             <div class="stop-header">
                 <h3 class="stop-name">{{ stop.locationName }}</h3>
                 <span class="stop-crs">{{ stop.crs }}</span>
             </div>
-            
+
             <div class="stop-times">
                 {% if stop.ata or stop.eta or stop.pta %}
                 <div class="time-row">
@@ -30,12 +29,12 @@
                         {% elif stop.eta and stop.eta != "On time" %}
                             <span class="scheduled-time">{{ stop.pta or stop.st }}</span> → {{ stop.eta }}
                         {% else %}
-                            {{ stop.pta or stop.st }} <span class="ontime-text">On time</span>
+                            {{ stop.pta or stop.st }}
                         {% endif %}
                     </span>
                 </div>
                 {% endif %}
-                
+
                 {% if stop.at or stop.et or stop.st %}
                 <div class="time-row">
                     <span class="time-label">Departure:</span>
@@ -45,7 +44,7 @@
                         {% elif stop.et and stop.et != "On time" %}
                             <span class="scheduled-time">{{ stop.st }}</span> → {{ stop.et }}
                         {% else %}
-                            {{ stop.st }} <span class="ontime-text">On time</span>
+                            {{ stop.st }}
                         {% endif %}
                     </span>
                 </div>
@@ -54,24 +53,22 @@
         </div>
     </div>
     {% endfor %}
-    
-    <!-- Selected board station -->
-    <div class="timeline-stop current-stop">
+
+    {% set ns.index = ns.index + 1 %}
+    <div class="timeline-stop">
         <div class="timeline-marker">
-            <div class="marker-icon marker-current">●</div>
-            {% if all_subsequent %}
+            <div class="marker-icon marker-route">○</div>
+            {% if ns.index < ns.total %}
             <div class="timeline-line"></div>
             {% endif %}
         </div>
-        
+
         <div class="stop-details">
             <div class="stop-header">
                 <h3 class="stop-name">{{ service.locationName }}</h3>
                 <span class="stop-crs">{{ service.crs }}</span>
             </div>
 
-            <div class="route-section-label route-section-label-inline">Selected board station</div>
-            
             <div class="stop-times">
                 {% if service.sta or service.eta or service.ata %}
                 <div class="time-row">
@@ -82,12 +79,12 @@
                         {% elif service.eta and service.eta != "On time" %}
                             <span class="scheduled-time">{{ service.sta }}</span> → {{ service.eta }}
                         {% else %}
-                            {{ service.sta }} <span class="ontime-text">On time</span>
+                            {{ service.sta }}
                         {% endif %}
                     </span>
                 </div>
                 {% endif %}
-                
+
                 {% if service.std or service.etd or service.atd %}
                 <div class="time-row">
                     <span class="time-label">Departure:</span>
@@ -97,7 +94,7 @@
                         {% elif service.etd and service.etd != "On time" %}
                             <span class="scheduled-time">{{ service.std }}</span> → {{ service.etd }}
                         {% else %}
-                            {{ service.std }} <span class="ontime-text">On time</span>
+                            {{ service.std }}
                         {% endif %}
                     </span>
                 </div>
@@ -105,27 +102,23 @@
             </div>
         </div>
     </div>
-    
-    {% if all_subsequent %}
-    <div class="route-section-label">Stops after {{ service.locationName }}</div>
-    {% endif %}
 
-    <!-- Stops after selected board station -->
     {% for stop in all_subsequent %}
-    <div class="timeline-stop after-board-stop">
+    {% set ns.index = ns.index + 1 %}
+    <div class="timeline-stop">
         <div class="timeline-marker">
-            <div class="marker-icon marker-after">○</div>
-            {% if not loop.last %}
+            <div class="marker-icon marker-route">○</div>
+            {% if ns.index < ns.total %}
             <div class="timeline-line"></div>
             {% endif %}
         </div>
-        
+
         <div class="stop-details">
             <div class="stop-header">
                 <h3 class="stop-name">{{ stop.locationName }}</h3>
                 <span class="stop-crs">{{ stop.crs }}</span>
             </div>
-            
+
             <div class="stop-times">
                 {% if stop.pta or stop.st %}
                 <div class="time-row">
@@ -136,12 +129,12 @@
                         {% elif stop.eta and stop.eta != "On time" %}
                             <span class="scheduled-time">{{ stop.pta or stop.st }}</span> → {{ stop.eta }}
                         {% else %}
-                            {{ stop.pta or stop.st }} <span class="ontime-text">On time</span>
+                            {{ stop.pta or stop.st }}
                         {% endif %}
                     </span>
                 </div>
                 {% endif %}
-                
+
                 {% if stop.st %}
                 <div class="time-row">
                     <span class="time-label">Departure:</span>
@@ -151,7 +144,7 @@
                         {% elif stop.et and stop.et != "On time" %}
                             <span class="scheduled-time">{{ stop.st }}</span> → <span class="status-delayed">{{ stop.et }}</span>
                         {% else %}
-                            {{ stop.st }} <span class="ontime-text">On time</span>
+                            {{ stop.st }}
                         {% endif %}
                     </span>
                 </div>
