@@ -84,7 +84,11 @@ async def board_search(crs: str, view: Optional[str] = "departures"):
 async def service_detail_page(request: Request, crs: str, service_id: str):
     """Display detailed route information for a specific train service."""
     crs = validate_crs(crs)
-    service = await rail_api_service.get_service_route(crs, service_id, use_cache=True)
+    service = await rail_api_service.get_service_route_following(
+        crs,
+        service_id,
+        use_cache=True,
+    )
 
     if not service:
         return templates.TemplateResponse(
@@ -111,7 +115,11 @@ async def service_detail_page(request: Request, crs: str, service_id: str):
 async def service_detail_refresh(request: Request, crs: str, service_id: str):
     """HTMX endpoint to refresh just the service timeline content."""
     crs = validate_crs(crs)
-    service = await rail_api_service.get_service_route(crs, service_id, use_cache=False)
+    service = await rail_api_service.get_service_route_following(
+        crs,
+        service_id,
+        use_cache=False,
+    )
 
     if not service:
         return HTMLResponse(
