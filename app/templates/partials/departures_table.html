@@ -46,7 +46,7 @@
                 <td>
                     {{ train.destination_name }}
                     {% if train.destination_via %}
-                    <div style="font-size: 0.75rem; color: var(--text-secondary);">via {{ train.destination_via }}</div>
+                    <div class="meta-subtle">via {{ train.destination_via }}</div>
                     {% endif %}
                     {% if not train.service_id %}
                     <div class="route-unavailable">Route unavailable</div>
