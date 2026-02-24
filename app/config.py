@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     # Cache Configuration
     cache_ttl_seconds: int = 60
     cache_backend: str = "memory"  # "memory" or "sqlite"
-    cache_sqlite_path: str = "/tmp/leatherheadlive_cache.sqlite3"
+    cache_sqlite_path: str = "/tmp/trains_mattdev_im_cache.sqlite3"
     
     # CORS Configuration
     cors_origins: list[str] = ["*"]
@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     cors_allow_headers: list[str] = ["*"]
     
     # Server Configuration
-    app_name: str = "Leatherhead Live Train Board API"
+    app_name: str = "trains.mattdev.im Train Board API"
     app_version: str = "1.0.0"
     debug: bool = False
     

@@ -70,7 +70,7 @@ class RailAPIService:
         """Get headers for API requests"""
         return {
             'x-apikey': self.api_key,
-            'User-Agent': 'LeatherheadLive/1.0'
+            'User-Agent': 'trains.mattdev.im/1.0'
         }
 
     def _current_timestamp_iso(self) -> str:
