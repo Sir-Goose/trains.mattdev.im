@@ -36,7 +36,7 @@ def test_nr_board_prefetch_runs_for_fresh_board(monkeypatch):
     assert calls == [("LHD", "abc123")]
 
 
-def test_nr_board_prefetch_skips_when_board_from_cache(monkeypatch):
+def test_nr_board_prefetch_runs_when_board_from_cache(monkeypatch):
     async def fake_get_nr_board_data(crs: str, view: str):
         return {
             "trains": [
@@ -65,7 +65,7 @@ def test_nr_board_prefetch_skips_when_board_from_cache(monkeypatch):
     response = client.get('/board/nr/LHD/departures')
 
     assert response.status_code == 200
-    assert calls == []
+    assert calls == [("LHD", "abc123")]
 
 
 def test_nr_board_content_prefetch_runs_for_fresh_board(monkeypatch):

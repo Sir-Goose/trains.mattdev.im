@@ -245,7 +245,7 @@ def test_tfl_board_prefetch_runs_for_fresh_board(monkeypatch):
     assert calls[0]["line_id"] == "victoria"
 
 
-def test_tfl_board_prefetch_skips_when_board_from_cache(monkeypatch):
+def test_tfl_board_prefetch_runs_when_board_from_cache(monkeypatch):
     async def fake_get_tfl_board_data(stop_point_id: str, view: str):
         return {
             "trains": [
@@ -277,7 +277,7 @@ def test_tfl_board_prefetch_skips_when_board_from_cache(monkeypatch):
     response = client.get('/board/tfl/940GZZLUGPK/departures')
 
     assert response.status_code == 200
-    assert calls == []
+    assert len(calls) == 1
 
 
 def test_tfl_board_content_prefetch_runs_for_fresh_board(monkeypatch):

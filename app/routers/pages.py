@@ -151,9 +151,6 @@ def schedule_homepage_board_prefetches() -> None:
 
 
 def schedule_nr_board_prefetch(crs: str, board: dict) -> None:
-    if board.get("from_cache", True):
-        return
-
     for train in board.get("trains", []):
         service_id = train.get("service_id")
         if service_id and train.get("service_url"):
@@ -161,9 +158,6 @@ def schedule_nr_board_prefetch(crs: str, board: dict) -> None:
 
 
 def schedule_tfl_board_prefetch(board: dict) -> None:
-    if board.get("from_cache", True):
-        return
-
     for train in board.get("trains", []):
         line_id = train.get("line_id")
         from_stop_id = train.get("from_stop_id")
