@@ -181,7 +181,7 @@ class TflAPIService:
                 params={
                     "query": query_variant,
                     "modes": ",".join(self.modes),
-                    "maxResults": max(max_results * 2, 12),
+                    "maxResults": max(max_results, 12),
                     "includeHubs": False,
                 },
             )
@@ -203,8 +203,7 @@ class TflAPIService:
                 continue
 
             mode_label = "Overground" if "overground" in stop_modes else "Tube"
-            raw_code = stop.get("id") or ""
-            code = await self.resolve_stop_point_id(raw_code)
+            code = stop.get("id") or ""
             display_name = self._format_search_stop_name(stop.get("name") or code, stop_modes)
             results.append(
                 {

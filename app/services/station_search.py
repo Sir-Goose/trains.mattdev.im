@@ -177,7 +177,7 @@ async def search_stations_unified(query: str, view: str, limit: int = 10) -> Lis
     nr_view = view if view in {"departures", "arrivals", "passing"} else "departures"
     tfl_view = view if view in {"departures", "arrivals"} else "departures"
 
-    provider_limit = max(limit * 3, 20)
+    provider_limit = max(limit, 12)
     nr_results = search_stations(query, limit=provider_limit)
     mapped_nr = [
         {
