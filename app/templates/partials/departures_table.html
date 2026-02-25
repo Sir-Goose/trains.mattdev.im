@@ -49,7 +49,9 @@
                     <div class="meta-subtle">{{ train.line_name }}</div>
                     {% endif %}
                     {% if train.destination_via %}
-                    <div class="meta-subtle">via {{ train.destination_via }}</div>
+                    <div class="meta-subtle">
+                        {% if train.destination_via_prefix %}{{ train.destination_via_prefix }} {% endif %}{{ train.destination_via }}
+                    </div>
                     {% endif %}
                     {% if train.route_unavailable %}
                     <div class="route-unavailable">Route unavailable</div>
