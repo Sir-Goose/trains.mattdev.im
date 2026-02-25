@@ -1,12 +1,13 @@
 # Leatherhead Live - Train Board Web App
 
-A FastAPI-powered frontend web app for UK National Rail live departure and arrival boards, with API routes supporting the UI.
+A FastAPI-powered frontend web app for UK National Rail and TfL (Tube/Overground) live departure and arrival boards, with API routes supporting the UI.
 
 ## Features
 
 - **Fast & Async**: Built with FastAPI and async/await for maximum performance
 - **Intelligent Caching**: 60-second in-memory cache to reduce API load
 - **Multi-Station Support**: Works with any UK station CRS code
+- **Provider Support**: National Rail + TfL Tube/Overground boards
 - **Type-Safe**: Full Pydantic validation for requests and responses
 - **Auto Documentation**: Interactive API docs at `/docs`
 - **CORS Enabled**: Ready for frontend integration
@@ -33,7 +34,8 @@ LeatherheadLive/
 │   ├── models/
 │   │   └── board.py         # Pydantic data models
 │   ├── services/
-│   │   └── rail_api.py      # National Rail API client
+│   │   ├── rail_api.py      # National Rail API client
+│   │   └── tfl_api.py       # TfL API client
 │   ├── routers/
 │   │   └── boards.py        # API endpoints
 │   └── middleware/
@@ -51,6 +53,7 @@ LeatherheadLive/
 - Python 3.10+
 - Virtual environment (recommended)
 - National Rail API key (get from https://www.nationalrail.co.uk/100296.aspx)
+- TfL API key (get from https://api-portal.tfl.gov.uk/)
 
 ### Setup
 
@@ -65,11 +68,15 @@ LeatherheadLive/
    pip install -r requirements.txt
    ```
 
-3. **Configure API key**:
+3. **Configure API keys**:
    ```bash
    cp .env.example .env
-   # Edit .env and set RAIL_API_KEY
+   # Edit .env and set RAIL_API_KEY and TFL_APP_KEY
    ```
+
+   Alternative file-based keys (same style as National Rail fallback):
+   - `key` for National Rail
+   - `tfl_key` for TfL
 
 ## Running the Server
 
@@ -190,6 +197,13 @@ GET /api/health
 
 Check API health status.
 
+#### 8. TfL Departures/Arrivals/Status
+```http
+GET /api/boards/tfl/{stop_point_id}/departures
+GET /api/boards/tfl/{stop_point_id}/arrivals
+GET /api/boards/tfl/{stop_point_id}/status
+```
+
 **Example**:
 ```bash
 curl http://localhost:8000/api/health
@@ -230,6 +244,11 @@ Configuration can be set via environment variables or the `.env` file:
 ```env
 # National Rail API Configuration
 RAIL_API_KEY=your_api_key_here
+
+# TfL API Configuration
+TFL_APP_KEY=your_tfl_app_key_here
+TFL_APP_ID=
+TFL_MODES=["tube","overground"]
 
 # Cache Configuration (default: 60 seconds)
 CACHE_TTL_SECONDS=60
@@ -302,3 +321,12 @@ Built with:
 - [HTTPX](https://www.python-httpx.org/) - Async HTTP client
 - [Uvicorn](https://www.uvicorn.org/) - ASGI server
 - National Rail API - Live train data
+#### 1b. Get Full Board (Provider-Prefixed National Rail)
+```http
+GET /api/boards/nr/{crs_code}
+```
+
+#### 1c. Get Full TfL Board
+```http
+GET /api/boards/tfl/{stop_point_id}
+```

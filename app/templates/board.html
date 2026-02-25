@@ -6,7 +6,10 @@
     <a href="/" class="header-link">
         <div class="header">
             <h1>{{ station_name }}</h1>
-            <p class="station-name">{{ crs }} • {{ total_trains }} train{{ 's' if total_trains != 1 else '' }} • Next 2 hours</p>
+            <p class="station-name">
+                {{ crs }} • {{ total_trains }} service{{ 's' if total_trains != 1 else '' }} • Next 2 hours •
+                {% if provider == 'tfl' %}TfL{% else %}National Rail{% endif %}
+            </p>
         </div>
     </a>
     

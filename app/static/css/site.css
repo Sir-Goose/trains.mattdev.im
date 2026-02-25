@@ -287,6 +287,43 @@ tr.status-cancelled {
     color: var(--danger);
 }
 
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.status-pill {
+    background: rgba(73, 209, 125, 0.1);
+    border: 1px solid rgba(73, 209, 125, 0.5);
+    border-radius: 8px;
+    padding: 0.65rem 0.8rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.status-pill strong {
+    font-size: 0.85rem;
+}
+
+.status-pill span {
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+}
+
+.status-pill small {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    line-height: 1.4;
+}
+
+.status-pill-warning {
+    background: rgba(242, 193, 79, 0.1);
+    border-color: rgba(242, 193, 79, 0.55);
+}
+
 .footer {
     border-top: 1px solid var(--border);
     padding: 1rem;

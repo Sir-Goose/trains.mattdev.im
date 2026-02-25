@@ -1,0 +1,11 @@
+<div class="status-grid">
+    {% for status in line_status %}
+    <div class="status-pill {% if status.status_description and status.status_description != 'Good Service' %}status-pill-warning{% endif %}">
+        <strong>{{ status.line_name }}</strong>
+        <span>{{ status.status_description or 'Service update unavailable' }}</span>
+        {% if status.reason %}
+        <small>{{ status.reason }}</small>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>

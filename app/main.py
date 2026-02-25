@@ -8,15 +8,18 @@ from contextlib import asynccontextmanager
 from app.config import settings
 from app.routers import boards, pages, stations
 from app.services.rail_api import rail_api_service
+from app.services.tfl_api import tfl_api_service
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     await rail_api_service.startup()
+    await tfl_api_service.startup()
     try:
         yield
     finally:
         await rail_api_service.shutdown()
+        await tfl_api_service.shutdown()
 
 
 # Create FastAPI application
@@ -99,6 +102,8 @@ async def health_check():
     return {
         "status": "healthy",
         "api_key_configured": bool(settings.rail_api_key),
+        "tfl_api_key_configured": bool(settings.tfl_app_key),
+        "tfl_modes": settings.tfl_modes,
         "cache_ttl": settings.cache_ttl_seconds,
         "cache_backend": settings.cache_backend,
     }

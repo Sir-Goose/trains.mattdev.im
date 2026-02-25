@@ -1,11 +1,16 @@
 """
 Station search service with fuzzy matching
 """
+import logging
 from rapidfuzz import fuzz, process
 from functools import lru_cache
 import json
 from pathlib import Path
 from typing import List, Dict
+
+from app.services.tfl_api import TflAPIError, tfl_api_service
+
+logger = logging.getLogger(__name__)
 
 STATIONS_FILE = Path(__file__).parent.parent / "static" / "data" / "stations.json"
 
@@ -103,3 +108,64 @@ def get_station_by_crs(crs_code: str) -> Dict | None:
     stations = load_stations()
     crs_upper = crs_code.upper()
     return next((s for s in stations if s['crsCode'] == crs_upper), None)
+
+
+async def search_stations_unified(query: str, view: str, limit: int = 10) -> List[Dict]:
+    """
+    Unified station search across National Rail and TfL.
+
+    Returns result items with fields:
+    - name
+    - badge
+    - url
+    - provider
+    """
+    if not query or len(query.strip()) == 0:
+        return []
+
+    nr_view = view if view in {"departures", "arrivals", "passing"} else "departures"
+    tfl_view = view if view in {"departures", "arrivals"} else "departures"
+
+    nr_limit = max(1, limit // 2)
+    tfl_limit = max(1, limit - nr_limit)
+
+    nr_results = search_stations(query, limit=limit)
+    mapped_nr = [
+        {
+            "provider": "nr",
+            "name": station["stationName"],
+            "badge": f"NR {station['crsCode']}",
+            "url": f"/board/nr/{station['crsCode']}/{nr_view}",
+        }
+        for station in nr_results
+    ]
+
+    mapped_tfl: List[Dict] = []
+    try:
+        mapped_tfl = await tfl_api_service.search_stop_points(query, max_results=max(limit, 12))
+        for item in mapped_tfl:
+            code = item.get("code")
+            if code:
+                item["url"] = f"/board/tfl/{code}/{tfl_view}"
+    except TflAPIError as exc:
+        logger.warning("TfL search unavailable, returning NR-only results: %s", exc)
+        mapped_tfl = []
+
+    nr_slice = mapped_nr[:nr_limit]
+    tfl_slice = mapped_tfl[:tfl_limit]
+
+    combined: List[Dict] = []
+    while (nr_slice or tfl_slice) and len(combined) < limit:
+        if nr_slice:
+            combined.append(nr_slice.pop(0))
+            if len(combined) >= limit:
+                break
+        if tfl_slice:
+            combined.append(tfl_slice.pop(0))
+
+    if len(combined) < limit:
+        combined.extend(mapped_nr[nr_limit : limit])
+    if len(combined) < limit:
+        combined.extend(mapped_tfl[tfl_limit : limit])
+
+    return combined[:limit]

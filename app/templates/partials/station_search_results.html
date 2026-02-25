@@ -1,7 +1,7 @@
 {% for station in results %}
-<a href="/board/{{ station.crsCode }}/{{ view }}" 
+<a href="{{ station.url }}" 
    class="autocomplete-result">
-    <span class="station-name">{{ station.stationName }}</span>
-    <span class="station-crs">{{ station.crsCode }}</span>
+    <span class="station-name">{{ station.name }}</span>
+    <span class="station-crs">{{ station.badge }}</span>
 </a>
 {% endfor %}

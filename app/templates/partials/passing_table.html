@@ -26,12 +26,12 @@
         <tbody>
             {% for train in trains %}
             <tr
-                class="{% if train.is_cancelled %}status-cancelled {% endif %}train-row{% if train.service_id %} train-row-clickable{% endif %}"
-                {% if train.service_id %}
-                onclick="window.location.href='/service/{{ crs }}/{{ train.service_id }}'"
+                class="{% if train.is_cancelled %}status-cancelled {% endif %}train-row{% if train.service_url %} train-row-clickable{% endif %}"
+                {% if train.service_url %}
+                onclick="window.location.href='{{ train.service_url }}'"
                 role="link"
                 tabindex="0"
-                onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href='/service/{{ crs }}/{{ train.service_id }}';}"
+                onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href='{{ train.service_url }}';}"
                 {% endif %}
             >
                 <td>
@@ -54,10 +54,13 @@
                 </td>
                 <td>
                     <div>{{ train.origin_name }} → {{ train.destination_name }}</div>
+                    {% if train.line_name %}
+                    <div class="meta-subtle">{{ train.line_name }}</div>
+                    {% endif %}
                     {% if train.destination_via %}
                     <div class="meta-subtle">via {{ train.destination_via }}</div>
                     {% endif %}
-                    {% if not train.service_id %}
+                    {% if train.route_unavailable %}
                     <div class="route-unavailable">Route unavailable</div>
                     {% endif %}
                     {% if train.is_cancelled %}

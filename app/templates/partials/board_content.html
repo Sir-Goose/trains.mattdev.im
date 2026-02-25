@@ -1,6 +1,9 @@
 <div id="board-content" hx-swap-oob="true"
-     hx-get="/board/{{ crs }}/{{ view }}/refresh"
+     hx-get="/board/{{ provider }}/{{ board_id }}/{{ view }}/refresh"
      hx-trigger="every 60s"
      hx-swap="innerHTML">
+    {% if provider == 'tfl' and line_status %}
+    {% include 'partials/tfl_status.html' %}
+    {% endif %}
     {% include 'partials/' + view + '_table.html' %}
 </div>

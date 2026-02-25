@@ -1,25 +1,27 @@
 <div id="tabs" hx-swap-oob="true">
     <div class="tabs">
         <button class="tab {% if view == 'departures' %}active{% endif %}"
-                hx-get="/board/{{ crs }}/departures/content"
+                hx-get="/board/{{ provider }}/{{ board_id }}/departures/content"
                 hx-target="#board-content"
                 hx-swap="innerHTML"
-                hx-push-url="/board/{{ crs }}/departures">
+                hx-push-url="/board/{{ provider }}/{{ board_id }}/departures">
             Departures
         </button>
         <button class="tab {% if view == 'arrivals' %}active{% endif %}"
-                hx-get="/board/{{ crs }}/arrivals/content"
+                hx-get="/board/{{ provider }}/{{ board_id }}/arrivals/content"
                 hx-target="#board-content"
                 hx-swap="innerHTML"
-                hx-push-url="/board/{{ crs }}/arrivals">
+                hx-push-url="/board/{{ provider }}/{{ board_id }}/arrivals">
             Arrivals
         </button>
+        {% if provider == 'nr' %}
         <button class="tab {% if view == 'passing' %}active{% endif %}"
-                hx-get="/board/{{ crs }}/passing/content"
+                hx-get="/board/{{ provider }}/{{ board_id }}/passing/content"
                 hx-target="#board-content"
                 hx-swap="innerHTML"
-                hx-push-url="/board/{{ crs }}/passing">
+                hx-push-url="/board/{{ provider }}/{{ board_id }}/passing">
             Passing Through
         </button>
+        {% endif %}
     </div>
 </div>

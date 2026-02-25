@@ -11,6 +11,12 @@ class Settings(BaseSettings):
     rail_api_key: str = ""
     rail_api_num_rows: int = 150  # Maximum trains to return
     rail_api_time_window: int = 120  # Time window in minutes (2 hours)
+
+    # TfL API Configuration
+    tfl_api_base_url: str = "https://api.tfl.gov.uk"
+    tfl_app_key: str = ""
+    tfl_app_id: str = ""
+    tfl_modes: list[str] = ["tube", "overground"]
     
     # Cache Configuration
     cache_ttl_seconds: int = 60
@@ -36,25 +42,40 @@ class Settings(BaseSettings):
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
+        # Allow TFL_API_KEY as an alias for TFL_APP_KEY for shell compatibility.
+        if not self.tfl_app_key:
+            self.tfl_app_key = os.getenv("TFL_APP_KEY") or os.getenv("TFL_API_KEY", "")
+
+        # Try to load TfL key from local file if not set via environment.
+        if not self.tfl_app_key:
+            self.tfl_app_key = self._load_key_from_file("tfl_key")
         
         # Try to load API key from 'key' file if not set via environment
         if not self.rail_api_key:
-            # Try multiple possible locations for the key file
-            possible_paths = [
-                Path(__file__).parent.parent / "key",  # Project root (relative to app/)
-                Path.cwd() / "key",  # Current working directory
-                Path(__file__).resolve().parent.parent / "key",  # Resolved absolute path
-            ]
-            
-            for key_file in possible_paths:
-                if key_file.exists():
-                    self.rail_api_key = key_file.read_text().strip()
-                    break
+            self.rail_api_key = self._load_key_from_file("key")
             
             if not self.rail_api_key:
                 raise FileNotFoundError(
                     "API key not found. Please create a 'key' file in the project root or set RAIL_API_KEY environment variable."
                 )
+
+    @staticmethod
+    def _load_key_from_file(filename: str) -> str:
+        """Load API key from project root or current working directory."""
+        possible_paths = [
+            Path(__file__).parent.parent / filename,  # Project root (relative to app/)
+            Path.cwd() / filename,  # Current working directory
+            Path(__file__).resolve().parent.parent / filename,  # Resolved absolute path
+        ]
+
+        for key_file in possible_paths:
+            if key_file.exists():
+                value = key_file.read_text().strip()
+                if value:
+                    return value
+
+        return ""
 
 
 # Global settings instance

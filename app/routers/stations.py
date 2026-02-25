@@ -4,7 +4,7 @@ Station search API endpoints
 from fastapi import APIRouter, Request, Query
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from app.services.station_search import search_stations
+from app.services.station_search import search_stations_unified
 
 router = APIRouter(prefix="/api/stations", tags=["stations"])
 templates = Jinja2Templates(directory="app/templates")
@@ -31,8 +31,8 @@ async def search(
     if not q or len(q.strip()) == 0:
         return HTMLResponse("")
     
-    # Perform fuzzy search
-    results = search_stations(q, limit=10)
+    # Perform unified search across National Rail and TfL
+    results = await search_stations_unified(q, view=view, limit=10)
     
     # No results = show empty state message
     if not results:
