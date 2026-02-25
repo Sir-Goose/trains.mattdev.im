@@ -1,6 +1,6 @@
-# Leatherhead Live - Train Board API
+# Leatherhead Live - Train Board Web App
 
-A high-performance FastAPI backend for UK National Rail live departure and arrival boards.
+A FastAPI-powered frontend web app for UK National Rail live departure and arrival boards, with API routes supporting the UI.
 
 ## Features
 
