@@ -1,5 +1,6 @@
 from app.models.tfl import TflPrediction
 from app.services.tfl_api import TflAPIError, TflAPIService
+import pytest
 
 
 def test_auth_params_key_only():
@@ -56,6 +57,21 @@ def test_predictions_for_view_falls_back_to_all():
     assert len(arrivals) == 1
 
 
+def test_predictions_for_view_keeps_no_direction_services_visible():
+    service = TflAPIService()
+    outbound = TflPrediction(direction="outbound", destinationName="A", expectedArrival="2026-01-01T12:00:00Z")
+    inbound = TflPrediction(direction="inbound", destinationName="B", expectedArrival="2026-01-01T12:01:00Z")
+    unknown = TflPrediction(direction=None, destinationName="C", expectedArrival="2026-01-01T12:02:00Z")
+
+    departures = service.predictions_for_view([outbound, inbound, unknown], "departures")
+    arrivals = service.predictions_for_view([outbound, inbound, unknown], "arrivals")
+
+    assert len(departures) == 2
+    assert len(arrivals) == 2
+    assert any(item.destination_name == "C" for item in departures)
+    assert any(item.destination_name == "C" for item in arrivals)
+
+
 def test_prediction_sort_primary_time_to_station():
     service = TflAPIService()
     soon = TflPrediction(destinationName="A", timeToStation=60, expectedArrival="2026-01-01T12:01:00Z")
@@ -64,3 +80,22 @@ def test_prediction_sort_primary_time_to_station():
     sorted_items = sorted([later, soon], key=service._prediction_sort_key)
 
     assert sorted_items[0].destination_name == "A"
+
+
+@pytest.mark.asyncio
+async def test_resolve_stop_point_id_maps_hub_to_mode_child(monkeypatch):
+    service = TflAPIService()
+
+    async def fake_get_json(path: str, params=None):
+        assert path == "/StopPoint/HUBBDS"
+        return {
+            "children": [
+                {"id": "910GBONDST", "modes": ["elizabeth-line"]},
+                {"id": "940GZZLUBND", "modes": ["tube"]},
+            ]
+        }
+
+    monkeypatch.setattr(service, "_get_json", fake_get_json)
+    resolved = await service.resolve_stop_point_id("HUBBDS")
+
+    assert resolved == "940GZZLUBND"

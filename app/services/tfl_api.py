@@ -109,6 +109,9 @@ class TflAPIService:
     def _search_cache_key(self, query: str) -> str:
         return f"tfl:search:{query.strip().lower()}"
 
+    def _stop_resolution_cache_key(self, stop_point_id: str) -> str:
+        return f"tfl:resolved_stop:{stop_point_id.lower()}"
+
     @staticmethod
     def _prediction_sort_key(prediction: TflPrediction):
         time_to_station = prediction.time_to_station if prediction.time_to_station is not None else 10**9
@@ -170,7 +173,8 @@ class TflAPIService:
                 continue
 
             mode_label = "Overground" if "overground" in stop_modes else "Tube"
-            code = stop.get("id") or ""
+            raw_code = stop.get("id") or ""
+            code = await self.resolve_stop_point_id(raw_code)
             results.append(
                 {
                     "provider": "tfl",
@@ -183,6 +187,38 @@ class TflAPIService:
 
         cache.set(cache_key, results, self.cache_ttl)
         return results
+
+    async def resolve_stop_point_id(self, stop_point_id: str) -> str:
+        """
+        Resolve hub stop IDs (e.g. HUBBDS) to a concrete platform/station
+        stop point that returns arrivals for configured TfL modes.
+        """
+        normalized = stop_point_id.strip()
+        if not normalized:
+            return stop_point_id
+
+        cache_key = self._stop_resolution_cache_key(normalized)
+        cached = cache.get(cache_key)
+        if isinstance(cached, str) and cached:
+            return cached
+
+        resolved = normalized
+        if normalized.upper().startswith("HUB"):
+            try:
+                payload = await self._get_json(f"/StopPoint/{normalized}")
+                candidates = payload.get("children", []) if isinstance(payload, dict) else []
+                for child in candidates:
+                    child_modes = set(child.get("modes") or [])
+                    if child_modes.intersection(self.modes):
+                        child_id = child.get("id")
+                        if child_id:
+                            resolved = child_id
+                            break
+            except (TflAPIError, TflBoardNotFoundError):
+                resolved = normalized
+
+        cache.set(cache_key, resolved, self.cache_ttl)
+        return resolved
 
     def _build_board(
         self,
@@ -221,6 +257,8 @@ class TflAPIService:
         if not stop_point_id:
             raise TflBoardNotFoundError("TfL stop point id is required.")
 
+        stop_point_id = await self.resolve_stop_point_id(stop_point_id)
+
         cache_key = self._board_cache_key(stop_point_id)
 
         if use_cache:
@@ -251,12 +289,13 @@ class TflAPIService:
         return TflBoardFetchResult(board=board, from_cache=False)
 
     def predictions_for_view(self, predictions: list[TflPrediction], view: str) -> list[TflPrediction]:
+        no_direction = [p for p in predictions if self._normalize_direction(p.direction) is None]
         if view == "departures":
             outbound = [p for p in predictions if self._normalize_direction(p.direction) == "outbound"]
-            return outbound if outbound else predictions
+            return outbound + no_direction if outbound else predictions
         if view == "arrivals":
             inbound = [p for p in predictions if self._normalize_direction(p.direction) == "inbound"]
-            return inbound if inbound else predictions
+            return inbound + no_direction if inbound else predictions
         return predictions
 
 
