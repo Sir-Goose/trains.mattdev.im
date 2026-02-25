@@ -48,7 +48,7 @@ LeatherheadLive/
 
 ### Prerequisites
 
-- Python 3.10-3.13 (3.14 currently has dependency build issues with `pydantic-core`)
+- Python 3.10+
 - Virtual environment (recommended)
 - National Rail API key (get from https://www.nationalrail.co.uk/100296.aspx)
 

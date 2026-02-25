@@ -1,6 +1,6 @@
 # FastAPI and ASGI server
-fastapi==0.115.6
-uvicorn[standard]==0.34.0
+fastapi==0.133.0
+uvicorn[standard]==0.41.0
 
 # Templates
 jinja2==3.1.6
@@ -9,22 +9,22 @@ jinja2==3.1.6
 httpx==0.28.1
 
 # Data validation and settings management
-pydantic==2.10.5
-pydantic-settings==2.7.1
+pydantic==2.12.5
+pydantic-settings==2.13.1
 
 # Environment variables
-python-dotenv==1.0.1
+python-dotenv==1.2.1
 
 # Fuzzy search for station names
-rapidfuzz>=3.0.0
+rapidfuzz==3.14.3
 
 # Existing dependencies
 requests==2.32.5
-certifi==2026.1.4
+certifi==2026.2.25
 charset-normalizer==3.4.4
 idna==3.11
 urllib3==2.6.3
 
 # Testing
-pytest==8.4.2
-pytest-asyncio==1.2.0
+pytest==9.0.2
+pytest-asyncio==1.3.0
