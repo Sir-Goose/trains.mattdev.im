@@ -48,10 +48,16 @@
             <dd>{{ service.direction|title if service.direction else 'Unknown' }}</dd>
 
             <dt>From</dt>
-            <dd class="monospace">{{ service.from_stop_id }}</dd>
+            <dd>
+                {{ service.origin_name }}
+                <div class="meta-subtle monospace">{{ service.from_stop_id }}</div>
+            </dd>
 
             <dt>To</dt>
-            <dd class="monospace">{{ service.to_stop_id }}</dd>
+            <dd>
+                {{ service.destination_name }}
+                <div class="meta-subtle monospace">{{ service.to_stop_id }}</div>
+            </dd>
 
             {% if service.vehicle_id %}
             <dt>Vehicle ID</dt>
