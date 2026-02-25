@@ -112,3 +112,19 @@ def test_search_tfl_stations_local_ranks_waterloo_with_plain_query(monkeypatch):
     assert results
     assert results[0]["code"] == "940GZZLUWLO"
     assert results[0]["name"] == "Waterloo Underground Station"
+
+
+def test_search_tfl_stations_local_formats_dlr_badge_and_name(monkeypatch):
+    monkeypatch.setattr(
+        station_search,
+        "load_tfl_stations",
+        lambda: [
+            {"id": "940GZZDLBOG", "name": "Bow Church", "modes": ["dlr"]},
+        ],
+    )
+
+    results = station_search.search_tfl_stations_local("bow", limit=5)
+
+    assert results
+    assert results[0]["name"] == "Bow Church DLR Station"
+    assert results[0]["badge"] == "TfL DLR"

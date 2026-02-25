@@ -1,5 +1,15 @@
 [
   {
+    "id": "940GZZDLABR",
+    "lat": 51.531926,
+    "lon": 0.003737,
+    "modes": [
+      "dlr"
+    ],
+    "name": "Abbey Road DLR Station",
+    "name_normalized": "abbey road"
+  },
+  {
     "id": "910GACTNCTL",
     "lat": 51.508716,
     "lon": -0.262971,
@@ -38,6 +48,16 @@
     ],
     "name": "Aldgate East Underground Station",
     "name_normalized": "aldgate east"
+  },
+  {
+    "id": "940GZZDLALL",
+    "lat": 51.511,
+    "lon": -0.013135,
+    "modes": [
+      "dlr"
+    ],
+    "name": "All Saints DLR Station",
+    "name_normalized": "all saints"
   },
   {
     "id": "940GZZLUALP",
@@ -130,6 +150,16 @@
     "name_normalized": "balham"
   },
   {
+    "id": "940GZZDLBNK",
+    "lat": 51.511995,
+    "lon": -0.088178,
+    "modes": [
+      "dlr"
+    ],
+    "name": "Bank DLR Station",
+    "name_normalized": "bank"
+  },
+  {
     "id": "940GZZLUBNK",
     "lat": 51.51342,
     "lon": -0.088954,
@@ -220,6 +250,26 @@
     "name_normalized": "bayswater"
   },
   {
+    "id": "940GZZDLBEC",
+    "lat": 51.514362,
+    "lon": 0.061453,
+    "modes": [
+      "dlr"
+    ],
+    "name": "Beckton DLR Station",
+    "name_normalized": "beckton"
+  },
+  {
+    "id": "940GZZDLBPK",
+    "lat": 51.508793,
+    "lon": 0.054932,
+    "modes": [
+      "dlr"
+    ],
+    "name": "Beckton Park DLR Station",
+    "name_normalized": "beckton park"
+  },
+  {
     "id": "940GZZLUBEC",
     "lat": 51.540331,
     "lon": 0.127016,
@@ -300,6 +350,16 @@
     "name_normalized": "blackhorse road rail"
   },
   {
+    "id": "940GZZDLBLA",
+    "lat": 51.507991,
+    "lon": -0.006969,
+    "modes": [
+      "dlr"
+    ],
+    "name": "Blackwall DLR Station",
+    "name_normalized": "blackwall"
+  },
+  {
     "id": "940GZZLUBND",
     "lat": 51.514299,
     "lon": -0.149377,
@@ -338,6 +398,16 @@
     ],
     "name": "Bounds Green Underground Station",
     "name_normalized": "bounds green"
+  },
+  {
+    "id": "940GZZDLBOW",
+    "lat": 51.527858,
+    "lon": -0.020936,
+    "modes": [
+      "dlr"
+    ],
+    "name": "Bow Church DLR Station",
+    "name_normalized": "bow church"
   },
   {
     "id": "9400ZZLUWR1",
@@ -560,6 +630,16 @@
     "name_normalized": "canada water rail"
   },
   {
+    "id": "940GZZDLCAN",
+    "lat": 51.504838,
+    "lon": -0.020997,
+    "modes": [
+      "dlr"
+    ],
+    "name": "Canary Wharf DLR Station",
+    "name_normalized": "canary wharf"
+  },
+  {
     "id": "940GZZLUCYF",
     "lat": 51.503488,
     "lon": -0.018246,
@@ -568,6 +648,16 @@
     ],
     "name": "Canary Wharf Underground Station",
     "name_normalized": "canary wharf"
+  },
+  {
+    "id": "940GZZDLCGT",
+    "lat": 51.514127,
+    "lon": 0.008101,
+    "modes": [
+      "dlr"
+    ],
+    "name": "Canning Town DLR Station",
+    "name_normalized": "canning town"
   },
   {
     "id": "940GZZLUCGT",
@@ -830,6 +920,16 @@
     "name_normalized": "covent garden"
   },
   {
+    "id": "940GZZDLCLA",
+    "lat": 51.495728,
+    "lon": -0.014606,
+    "modes": [
+      "dlr"
+    ],
+    "name": "Crossharbour DLR Station",
+    "name_normalized": "crossharbour"
+  },
+  {
     "id": "910GCROUCHH",
     "lat": 51.571302,
     "lon": -0.117149,
@@ -858,6 +958,36 @@
     ],
     "name": "Crystal Palace Rail Overground Station",
     "name_normalized": "crystal palace rail"
+  },
+  {
+    "id": "940GZZDLCUS",
+    "lat": 51.509716,
+    "lon": 0.026699,
+    "modes": [
+      "dlr"
+    ],
+    "name": "Custom House (for ExCel) DLR Station",
+    "name_normalized": "custom house (for excel)"
+  },
+  {
+    "id": "940GZZDLCUT",
+    "lat": 51.481671,
+    "lon": -0.01081,
+    "modes": [
+      "dlr"
+    ],
+    "name": "Cutty Sark (for Maritime Greenwich) DLR Station",
+    "name_normalized": "cutty sark (for maritime greenwich)"
+  },
+  {
+    "id": "940GZZDLCYP",
+    "lat": 51.508473,
+    "lon": 0.063925,
+    "modes": [
+      "dlr"
+    ],
+    "name": "Cyprus DLR Station",
+    "name_normalized": "cyprus"
   },
   {
     "id": "940GZZLUDGE",
@@ -918,6 +1048,26 @@
     ],
     "name": "Denmark Hill Rail Overground Station",
     "name_normalized": "denmark hill rail"
+  },
+  {
+    "id": "940GZZDLDEP",
+    "lat": 51.474215,
+    "lon": -0.022438,
+    "modes": [
+      "dlr"
+    ],
+    "name": "Deptford Bridge DLR Station",
+    "name_normalized": "deptford bridge"
+  },
+  {
+    "id": "940GZZDLDEV",
+    "lat": 51.522667,
+    "lon": -0.017615,
+    "modes": [
+      "dlr"
+    ],
+    "name": "Devons Road DLR Station",
+    "name_normalized": "devons road"
   },
   {
     "id": "940GZZLUDOH",
@@ -988,6 +1138,16 @@
     ],
     "name": "East Ham Underground Station",
     "name_normalized": "east ham"
+  },
+  {
+    "id": "940GZZDLEIN",
+    "lat": 51.509359,
+    "lon": -0.002326,
+    "modes": [
+      "dlr"
+    ],
+    "name": "East India DLR Station",
+    "name_normalized": "east india"
   },
   {
     "id": "940GZZLUEPY",
@@ -1068,6 +1228,16 @@
     ],
     "name": "Elm Park Underground Station",
     "name_normalized": "elm park"
+  },
+  {
+    "id": "940GZZDLELV",
+    "lat": 51.469074,
+    "lon": -0.016728,
+    "modes": [
+      "dlr"
+    ],
+    "name": "Elverson Road DLR Station",
+    "name_normalized": "elverson road"
   },
   {
     "id": "940GZZLUEMB",
@@ -1210,6 +1380,16 @@
     "name_normalized": "fulham broadway"
   },
   {
+    "id": "940GZZDLGAL",
+    "lat": 51.508941,
+    "lon": 0.071555,
+    "modes": [
+      "dlr"
+    ],
+    "name": "Gallions Reach DLR Station",
+    "name_normalized": "gallions reach"
+  },
+  {
     "id": "940GZZLUGTH",
     "lat": 51.576438,
     "lon": 0.065054,
@@ -1308,6 +1488,16 @@
     ],
     "name": "Greenford Underground Station",
     "name_normalized": "greenford"
+  },
+  {
+    "id": "940GZZDLGRE",
+    "lat": 51.478087,
+    "lon": -0.013673,
+    "modes": [
+      "dlr"
+    ],
+    "name": "Greenwich DLR Station",
+    "name_normalized": "greenwich"
   },
   {
     "id": "940GZZLUGBY",
@@ -1560,6 +1750,16 @@
     "name_normalized": "hendon central"
   },
   {
+    "id": "940GZZDLHEQ",
+    "lat": 51.503379,
+    "lon": -0.021421,
+    "modes": [
+      "dlr"
+    ],
+    "name": "Heron Quays DLR Station",
+    "name_normalized": "heron quays"
+  },
+  {
     "id": "940GZZLUHBT",
     "lat": 51.650541,
     "lon": -0.194298,
@@ -1760,6 +1960,16 @@
     "name_normalized": "imperial wharf rail"
   },
   {
+    "id": "940GZZDLISL",
+    "lat": 51.488048,
+    "lon": -0.010359,
+    "modes": [
+      "dlr"
+    ],
+    "name": "Island Gardens DLR Station",
+    "name_normalized": "island gardens"
+  },
+  {
     "id": "940GZZLUKNG",
     "lat": 51.488337,
     "lon": -0.105963,
@@ -1910,6 +2120,16 @@
     "name_normalized": "kilburn park"
   },
   {
+    "id": "940GZZDLKGV",
+    "lat": 51.502003,
+    "lon": 0.062624,
+    "modes": [
+      "dlr"
+    ],
+    "name": "King George V. DLR Station",
+    "name_normalized": "king george v."
+  },
+  {
     "id": "940GZZLUKSX",
     "lat": 51.530663,
     "lon": -0.123194,
@@ -1970,6 +2190,16 @@
     "name_normalized": "lancaster gate"
   },
   {
+    "id": "940GZZDLLDP",
+    "lat": 51.515172,
+    "lon": -0.01415,
+    "modes": [
+      "dlr"
+    ],
+    "name": "Langdon Park DLR Station",
+    "name_normalized": "langdon park"
+  },
+  {
     "id": "940GZZLULRD",
     "lat": 51.513389,
     "lon": -0.217799,
@@ -1988,6 +2218,16 @@
     ],
     "name": "Leicester Square Underground Station",
     "name_normalized": "leicester square"
+  },
+  {
+    "id": "940GZZDLLEW",
+    "lat": 51.464665,
+    "lon": -0.012874,
+    "modes": [
+      "dlr"
+    ],
+    "name": "Lewisham DLR Station",
+    "name_normalized": "lewisham"
   },
   {
     "id": "940GZZLULYN",
@@ -2030,6 +2270,16 @@
     "name_normalized": "leytonstone high road rail"
   },
   {
+    "id": "940GZZDLLIM",
+    "lat": 51.512393,
+    "lon": -0.039809,
+    "modes": [
+      "dlr"
+    ],
+    "name": "Limehouse DLR Station",
+    "name_normalized": "limehouse"
+  },
+  {
     "id": "940GZZLULVT",
     "lat": 51.517372,
     "lon": -0.083182,
@@ -2058,6 +2308,16 @@
     ],
     "name": "London Bridge Rail Overground Station",
     "name_normalized": "london bridge rail"
+  },
+  {
+    "id": "940GZZDLLCA",
+    "lat": 51.503452,
+    "lon": 0.048712,
+    "modes": [
+      "dlr"
+    ],
+    "name": "London City Airport DLR Station",
+    "name_normalized": "london city airport"
   },
   {
     "id": "910GEUSTON",
@@ -2218,6 +2478,16 @@
     ],
     "name": "Mornington Crescent Underground Station",
     "name_normalized": "mornington crescent"
+  },
+  {
+    "id": "940GZZDLMUD",
+    "lat": 51.490704,
+    "lon": -0.014738,
+    "modes": [
+      "dlr"
+    ],
+    "name": "Mudchute DLR Station",
+    "name_normalized": "mudchute"
   },
   {
     "id": "940GZZLUNDN",
@@ -2560,6 +2830,26 @@
     "name_normalized": "plaistow"
   },
   {
+    "id": "940GZZDLPDK",
+    "lat": 51.502212,
+    "lon": 0.032115,
+    "modes": [
+      "dlr"
+    ],
+    "name": "Pontoon Dock DLR Station",
+    "name_normalized": "pontoon dock"
+  },
+  {
+    "id": "940GZZDLPOP",
+    "lat": 51.507614,
+    "lon": -0.01713,
+    "modes": [
+      "dlr"
+    ],
+    "name": "Poplar DLR Station",
+    "name_normalized": "poplar"
+  },
+  {
     "id": "940GZZLUPRD",
     "lat": 51.572173,
     "lon": -0.295316,
@@ -2568,6 +2858,26 @@
     ],
     "name": "Preston Road Underground Station",
     "name_normalized": "preston road"
+  },
+  {
+    "id": "940GZZDLPRE",
+    "lat": 51.509439,
+    "lon": 0.03333,
+    "modes": [
+      "dlr"
+    ],
+    "name": "Prince Regent DLR Station",
+    "name_normalized": "prince regent"
+  },
+  {
+    "id": "940GZZDLPUD",
+    "lat": 51.534302,
+    "lon": -0.012755,
+    "modes": [
+      "dlr"
+    ],
+    "name": "Pudding Mill Lane DLR Station",
+    "name_normalized": "pudding mill lane"
   },
   {
     "id": "940GZZLUPYB",
@@ -2740,6 +3050,16 @@
     "name_normalized": "rotherhithe rail"
   },
   {
+    "id": "940GZZDLRAL",
+    "lat": 51.508357,
+    "lon": 0.045935,
+    "modes": [
+      "dlr"
+    ],
+    "name": "Royal Albert DLR Station",
+    "name_normalized": "royal albert"
+  },
+  {
     "id": "940GZZLURYO",
     "lat": 51.519078,
     "lon": -0.18823,
@@ -2748,6 +3068,16 @@
     ],
     "name": "Royal Oak Underground Station",
     "name_normalized": "royal oak"
+  },
+  {
+    "id": "940GZZDLRVC",
+    "lat": 51.509336,
+    "lon": 0.018497,
+    "modes": [
+      "dlr"
+    ],
+    "name": "Royal Victoria DLR Station",
+    "name_normalized": "royal victoria"
   },
   {
     "id": "940GZZLURSP",
@@ -2808,6 +3138,16 @@
     ],
     "name": "Seven Sisters Rail Overground Station",
     "name_normalized": "seven sisters rail"
+  },
+  {
+    "id": "940GZZDLSHA",
+    "lat": 51.511707,
+    "lon": -0.055893,
+    "modes": [
+      "dlr"
+    ],
+    "name": "Shadwell DLR DLR Station",
+    "name_normalized": "shadwell dlr"
   },
   {
     "id": "910GSHADWEL",
@@ -2960,6 +3300,16 @@
     "name_normalized": "south kenton rail"
   },
   {
+    "id": "940GZZDLSOQ",
+    "lat": 51.500053,
+    "lon": -0.016133,
+    "modes": [
+      "dlr"
+    ],
+    "name": "South Quay DLR Station",
+    "name_normalized": "south quay"
+  },
+  {
     "id": "940GZZLUSRP",
     "lat": 51.556958,
     "lon": -0.399373,
@@ -3110,6 +3460,16 @@
     "name_normalized": "stanmore"
   },
   {
+    "id": "940GZZDLSTL",
+    "lat": 51.520786,
+    "lon": 0.004156,
+    "modes": [
+      "dlr"
+    ],
+    "name": "Star Lane DLR Station",
+    "name_normalized": "star lane"
+  },
+  {
     "id": "940GZZLUSGN",
     "lat": 51.521858,
     "lon": -0.046596,
@@ -3160,6 +3520,16 @@
     "name_normalized": "stonebridge park rail"
   },
   {
+    "id": "940GZZDLSTD",
+    "lat": 51.541758,
+    "lon": -0.003287,
+    "modes": [
+      "dlr"
+    ],
+    "name": "Stratford DLR Station",
+    "name_normalized": "stratford"
+  },
+  {
     "id": "940GZZLUSTD",
     "lat": 51.541806,
     "lon": -0.003458,
@@ -3178,6 +3548,26 @@
     ],
     "name": "Stratford (London) Rail Overground Station",
     "name_normalized": "stratford (london) rail"
+  },
+  {
+    "id": "940GZZDLSHS",
+    "lat": 51.538196,
+    "lon": -0.001078,
+    "modes": [
+      "dlr"
+    ],
+    "name": "Stratford High Street DLR Station",
+    "name_normalized": "stratford high street"
+  },
+  {
+    "id": "940GZZDLSIT",
+    "lat": 51.545265,
+    "lon": -0.009638,
+    "modes": [
+      "dlr"
+    ],
+    "name": "Stratford International DLR Station",
+    "name_normalized": "stratford international"
   },
   {
     "id": "940GZZLUSUH",
@@ -3308,6 +3698,16 @@
     ],
     "name": "Totteridge & Whetstone Underground Station",
     "name_normalized": "totteridge & whetstone"
+  },
+  {
+    "id": "940GZZDLTWG",
+    "lat": 51.510617,
+    "lon": -0.074818,
+    "modes": [
+      "dlr"
+    ],
+    "name": "Tower Gateway Station DLR DLR Station",
+    "name_normalized": "tower gateway station dlr"
   },
   {
     "id": "940GZZLUTWH",
@@ -3670,6 +4070,16 @@
     "name_normalized": "west finchley"
   },
   {
+    "id": "940GZZDLWHM",
+    "lat": 51.527894,
+    "lon": 0.004482,
+    "modes": [
+      "dlr"
+    ],
+    "name": "West Ham DLR Station",
+    "name_normalized": "west ham"
+  },
+  {
     "id": "940GZZLUWHM",
     "lat": 51.528136,
     "lon": 0.005055,
@@ -3710,6 +4120,16 @@
     "name_normalized": "west harrow"
   },
   {
+    "id": "940GZZDLWIQ",
+    "lat": 51.50703,
+    "lon": -0.020311,
+    "modes": [
+      "dlr"
+    ],
+    "name": "West India Quay DLR Station",
+    "name_normalized": "west india quay"
+  },
+  {
     "id": "940GZZLUWKN",
     "lat": 51.490459,
     "lon": -0.206636,
@@ -3730,6 +4150,16 @@
     "name_normalized": "west ruislip"
   },
   {
+    "id": "940GZZDLWSV",
+    "lat": 51.502838,
+    "lon": 0.02246,
+    "modes": [
+      "dlr"
+    ],
+    "name": "West Silvertown DLR Station",
+    "name_normalized": "west silvertown"
+  },
+  {
     "id": "940GZZLUWSP",
     "lat": 51.52111,
     "lon": -0.201065,
@@ -3738,6 +4168,16 @@
     ],
     "name": "Westbourne Park Underground Station",
     "name_normalized": "westbourne park"
+  },
+  {
+    "id": "940GZZDLWFE",
+    "lat": 51.509431,
+    "lon": -0.02675,
+    "modes": [
+      "dlr"
+    ],
+    "name": "Westferry DLR Station",
+    "name_normalized": "westferry"
   },
   {
     "id": "940GZZLUWSM",
@@ -3918,5 +4358,15 @@
     ],
     "name": "Woodside Park Underground Station",
     "name_normalized": "woodside park"
+  },
+  {
+    "id": "940GZZDLWLA",
+    "lat": 51.490009,
+    "lon": 0.069127,
+    "modes": [
+      "dlr"
+    ],
+    "name": "Woolwich Arsenal DLR Station",
+    "name_normalized": "woolwich arsenal"
   }
 ]

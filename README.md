@@ -7,7 +7,7 @@ A FastAPI-powered frontend web app for UK National Rail and TfL (Tube/Overground
 - **Fast & Async**: Built with FastAPI and async/await for maximum performance
 - **Intelligent Caching**: 60-second in-memory cache to reduce API load
 - **Multi-Station Support**: Works with any UK station CRS code
-- **Provider Support**: National Rail + TfL Tube/Overground boards
+- **Provider Support**: National Rail + TfL Tube/Overground/DLR boards
 - **Type-Safe**: Full Pydantic validation for requests and responses
 - **Auto Documentation**: Interactive API docs at `/docs`
 - **CORS Enabled**: Ready for frontend integration
@@ -255,7 +255,7 @@ RAIL_API_KEY=your_api_key_here
 # TfL API Configuration
 TFL_APP_KEY=your_tfl_app_key_here
 TFL_APP_ID=
-TFL_MODES=["tube","overground"]
+TFL_MODES=["tube","overground","dlr"]
 
 # Cache Configuration (default: 60 seconds)
 CACHE_TTL_SECONDS=60

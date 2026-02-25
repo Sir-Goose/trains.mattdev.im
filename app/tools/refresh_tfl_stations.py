@@ -10,7 +10,7 @@ import httpx
 from app.config import settings
 
 OUTPUT_FILE = Path(__file__).parent.parent / "static" / "data" / "tfl_stations.json"
-DEFAULT_MODES = ["tube", "overground"]
+DEFAULT_MODES = ["tube", "overground", "dlr"]
 PAGE_SIZE = 1000
 
 
@@ -19,6 +19,7 @@ def normalize_station_name(value: str) -> str:
     suffixes = [
         " underground station",
         " overground station",
+        " dlr station",
         " station",
     ]
     for suffix in suffixes:
@@ -34,7 +35,7 @@ def _format_station_name(raw_name: str, modes: list[str]) -> str:
         return cleaned
 
     lower = cleaned.lower()
-    if lower.endswith("underground station") or lower.endswith("overground station"):
+    if lower.endswith("underground station") or lower.endswith("overground station") or lower.endswith("dlr station"):
         return cleaned
 
     mode_set = set(modes or [])
@@ -44,6 +45,9 @@ def _format_station_name(raw_name: str, modes: list[str]) -> str:
     if "overground" in mode_set and "tube" not in mode_set:
         base = cleaned[:-8].strip() if lower.endswith(" station") else cleaned
         return f"{base} Overground Station"
+    if "dlr" in mode_set and "tube" not in mode_set and "overground" not in mode_set:
+        base = cleaned[:-8].strip() if lower.endswith(" station") else cleaned
+        return f"{base} DLR Station"
     return cleaned
 
 

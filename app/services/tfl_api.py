@@ -202,7 +202,14 @@ class TflAPIService:
             if not stop_modes:
                 continue
 
-            mode_label = "Overground" if "overground" in stop_modes else "Tube"
+            if "tube" in stop_modes:
+                mode_label = "Tube"
+            elif "overground" in stop_modes:
+                mode_label = "Overground"
+            elif "dlr" in stop_modes:
+                mode_label = "DLR"
+            else:
+                mode_label = "TfL"
             code = stop.get("id") or ""
             display_name = self._format_search_stop_name(stop.get("name") or code, stop_modes)
             results.append(
@@ -268,7 +275,7 @@ class TflAPIService:
             return cleaned
 
         lower = cleaned.lower()
-        if lower.endswith("underground station") or lower.endswith("overground station"):
+        if lower.endswith("underground station") or lower.endswith("overground station") or lower.endswith("dlr station"):
             return cleaned
 
         mode_set = set(modes or [])
@@ -278,6 +285,9 @@ class TflAPIService:
         if "overground" in mode_set and "tube" not in mode_set:
             base = cleaned[:-8].strip() if lower.endswith(" station") else cleaned
             return f"{base} Overground Station"
+        if "dlr" in mode_set and "tube" not in mode_set and "overground" not in mode_set:
+            base = cleaned[:-8].strip() if lower.endswith(" station") else cleaned
+            return f"{base} DLR Station"
         return cleaned
 
     async def resolve_stop_point_id(self, stop_point_id: str) -> str:
@@ -620,7 +630,8 @@ class TflAPIService:
             or (matched.destination_name if matched else None)
             or await self._get_stop_name(to_stop_id)
         )
-        resolved_mode_name = (matched.mode_name if matched else None) or "tube"
+        inferred_mode_name = "dlr" if line_id == "dlr" else (self.modes[0] if self.modes else "tube")
+        resolved_mode_name = (matched.mode_name if matched else None) or inferred_mode_name
         resolved_trip_id = (matched.trip_id if matched else None) or trip_id
         resolved_vehicle_id = (matched.vehicle_id if matched else None) or vehicle_id
         resolved_expected_arrival = (

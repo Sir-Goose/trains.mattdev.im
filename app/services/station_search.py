@@ -47,7 +47,7 @@ def _format_tfl_search_name(raw_name: str, modes: list[str]) -> str:
         return cleaned
 
     lower = cleaned.lower()
-    if lower.endswith("underground station") or lower.endswith("overground station"):
+    if lower.endswith("underground station") or lower.endswith("overground station") or lower.endswith("dlr station"):
         return cleaned
 
     mode_set = set(modes or [])
@@ -57,6 +57,9 @@ def _format_tfl_search_name(raw_name: str, modes: list[str]) -> str:
     if "overground" in mode_set and "tube" not in mode_set:
         base = cleaned[:-8].strip() if lower.endswith(" station") else cleaned
         return f"{base} Overground Station"
+    if "dlr" in mode_set and "tube" not in mode_set and "overground" not in mode_set:
+        base = cleaned[:-8].strip() if lower.endswith(" station") else cleaned
+        return f"{base} DLR Station"
     return cleaned
 
 
@@ -79,7 +82,7 @@ def search_tfl_stations_local(query: str, limit: int = 10) -> List[Dict]:
         if not raw_name or not station_id:
             continue
 
-        modes = [mode for mode in (station.get("modes") or []) if mode in {"tube", "overground"}]
+        modes = [mode for mode in (station.get("modes") or []) if mode in {"tube", "overground", "dlr"}]
         if not modes:
             continue
 
@@ -107,8 +110,15 @@ def search_tfl_stations_local(query: str, limit: int = 10) -> List[Dict]:
 
     results: List[Dict] = []
     for station, _ in scored[:limit]:
-        modes = [mode for mode in (station.get("modes") or []) if mode in {"tube", "overground"}]
-        mode_label = "Overground" if "overground" in modes and "tube" not in modes else "Tube"
+        modes = [mode for mode in (station.get("modes") or []) if mode in {"tube", "overground", "dlr"}]
+        if "tube" in modes:
+            mode_label = "Tube"
+        elif "overground" in modes:
+            mode_label = "Overground"
+        elif "dlr" in modes:
+            mode_label = "DLR"
+        else:
+            mode_label = "TfL"
         station_id = station.get("id")
         display_name = _format_tfl_search_name(station.get("name") or "", modes)
         results.append(
@@ -215,6 +225,7 @@ def _normalize_search_text(value: str) -> str:
     suffixes = [
         " underground station",
         " overground station",
+        " dlr station",
         " station",
     ]
     for suffix in suffixes:
@@ -254,7 +265,9 @@ def _score_unified_result(result: Dict, query: str) -> int:
         score += 200
 
     if result.get("provider") == "tfl" and (
-        name_lower.endswith("underground station") or name_lower.endswith("overground station")
+        name_lower.endswith("underground station")
+        or name_lower.endswith("overground station")
+        or name_lower.endswith("dlr station")
     ):
         score += 10
 

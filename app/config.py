@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     tfl_api_base_url: str = "https://api.tfl.gov.uk"
     tfl_app_key: str = ""
     tfl_app_id: str = ""
-    tfl_modes: list[str] = ["tube", "overground"]
+    tfl_modes: list[str] = ["tube", "overground", "dlr"]
     
     # Cache Configuration
     cache_ttl_seconds: int = 60

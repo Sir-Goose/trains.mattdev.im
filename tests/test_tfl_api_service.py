@@ -246,3 +246,30 @@ async def test_search_stop_points_formats_tube_station_name(monkeypatch):
 
     assert results
     assert results[0]["name"] == "Waterloo Underground Station"
+
+
+@pytest.mark.asyncio
+async def test_search_stop_points_formats_dlr_station_name_and_badge(monkeypatch):
+    service = TflAPIService()
+    service.app_key = "test-key"
+    service.modes = ["tube", "overground", "dlr"]
+
+    async def fake_get_json(path: str, params=None):
+        assert path == "/StopPoint/Search"
+        return {
+            "matches": [
+                {"id": "940GZZDLBOG", "name": "Bow Church", "modes": ["dlr"]},
+            ]
+        }
+
+    async def fake_resolve_stop_point_id(stop_id: str):
+        return stop_id
+
+    monkeypatch.setattr(service, "_get_json", fake_get_json)
+    monkeypatch.setattr(service, "resolve_stop_point_id", fake_resolve_stop_point_id)
+
+    results = await service.search_stop_points("bow", max_results=5)
+
+    assert results
+    assert results[0]["name"] == "Bow Church DLR Station"
+    assert results[0]["badge"] == "TfL DLR"

@@ -41,6 +41,25 @@ def test_extract_station_records_filters_modes_and_entrances():
     assert records[0]["name"] == "Waterloo Underground Station"
 
 
+def test_extract_station_records_formats_dlr_station_names():
+    payload = {
+        "stopPoints": [
+            {
+                "id": "940GZZDLBOG",
+                "stationNaptan": "940GZZDLBOG",
+                "commonName": "Bow Church",
+                "modes": ["dlr"],
+                "stopType": "NaptanMetroStation",
+            }
+        ]
+    }
+
+    records = tool.extract_station_records(payload, ["tube", "overground", "dlr"])
+
+    assert len(records) == 1
+    assert records[0]["name"] == "Bow Church DLR Station"
+
+
 @pytest.mark.asyncio
 async def test_build_tfl_station_index_handles_paging_and_dedup():
     pages = {
