@@ -194,3 +194,55 @@ async def test_get_service_route_detail_builds_stops_from_fallback(monkeypatch):
     assert len(detail.stops) >= 2
     assert detail.stops[0].is_current is True
     assert any(stop.is_destination for stop in detail.stops)
+
+
+@pytest.mark.asyncio
+async def test_search_stop_points_normalizes_station_suffix_for_ranking(monkeypatch):
+    service = TflAPIService()
+    service.app_key = "test-key"
+
+    async def fake_get_json(path: str, params=None):
+        assert path == "/StopPoint/Search"
+        return {
+            "matches": [
+                {"id": "940GZZLUWLO", "name": "Waterloo Underground Station", "modes": ["tube"]},
+                {"id": "940GZZLUWRR", "name": "Warren Street Underground Station", "modes": ["tube"]},
+                {"id": "940GZZLUEUS", "name": "Euston Underground Station", "modes": ["tube"]},
+            ]
+        }
+
+    async def fake_resolve_stop_point_id(stop_id: str):
+        return stop_id
+
+    monkeypatch.setattr(service, "_get_json", fake_get_json)
+    monkeypatch.setattr(service, "resolve_stop_point_id", fake_resolve_stop_point_id)
+
+    results = await service.search_stop_points("waterloo", max_results=5)
+
+    assert results
+    assert results[0]["name"] == "Waterloo Underground Station"
+
+
+@pytest.mark.asyncio
+async def test_search_stop_points_formats_tube_station_name(monkeypatch):
+    service = TflAPIService()
+    service.app_key = "test-key"
+
+    async def fake_get_json(path: str, params=None):
+        assert path == "/StopPoint/Search"
+        return {
+            "matches": [
+                {"id": "940GZZLUWLO", "name": "Waterloo", "modes": ["tube"]},
+            ]
+        }
+
+    async def fake_resolve_stop_point_id(stop_id: str):
+        return stop_id
+
+    monkeypatch.setattr(service, "_get_json", fake_get_json)
+    monkeypatch.setattr(service, "resolve_stop_point_id", fake_resolve_stop_point_id)
+
+    results = await service.search_stop_points("waterloo", max_results=5)
+
+    assert results
+    assert results[0]["name"] == "Waterloo Underground Station"

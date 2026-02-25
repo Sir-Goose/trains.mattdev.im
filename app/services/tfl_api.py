@@ -169,18 +169,35 @@ class TflAPIService:
         if isinstance(cached, list):
             return cached
 
-        payload = await self._get_json(
-            "/StopPoint/Search",
-            params={
-                "query": normalized_query,
-                "modes": ",".join(self.modes),
-                "maxResults": max_results,
-                "includeHubs": False,
-            },
+        query_variants = [normalized_query]
+        normalized_core_query = self._normalize_station_search_text(normalized_query)
+        if normalized_core_query and normalized_core_query.lower() != normalized_query.lower():
+            query_variants.append(normalized_core_query)
+
+        merged_matches: dict[str, dict] = {}
+        for query_variant in query_variants:
+            payload = await self._get_json(
+                "/StopPoint/Search",
+                params={
+                    "query": query_variant,
+                    "modes": ",".join(self.modes),
+                    "maxResults": max(max_results * 2, 12),
+                    "includeHubs": False,
+                },
+            )
+            for stop in (payload or {}).get("matches", []):
+                stop_id = (stop.get("id") or "").strip()
+                if not stop_id:
+                    continue
+                merged_matches[stop_id] = stop
+
+        ranked_matches = sorted(
+            merged_matches.values(),
+            key=lambda stop: self._stop_search_rank(stop, normalized_core_query or normalized_query),
         )
 
         results: list[dict] = []
-        for stop in (payload or {}).get("matches", []):
+        for stop in ranked_matches:
             stop_modes = [mode for mode in (stop.get("modes") or []) if mode in self.modes]
             if not stop_modes:
                 continue
@@ -188,18 +205,81 @@ class TflAPIService:
             mode_label = "Overground" if "overground" in stop_modes else "Tube"
             raw_code = stop.get("id") or ""
             code = await self.resolve_stop_point_id(raw_code)
+            display_name = self._format_search_stop_name(stop.get("name") or code, stop_modes)
             results.append(
                 {
                     "provider": "tfl",
-                    "name": stop.get("name") or code,
+                    "name": display_name,
                     "code": code,
                     "badge": f"TfL {mode_label}",
                     "url": f"/board/tfl/{code}/departures",
                 }
             )
+            if len(results) >= max_results:
+                break
 
         cache.set(cache_key, results, self.cache_ttl)
         return results
+
+    @staticmethod
+    def _normalize_station_search_text(value: str) -> str:
+        normalized = value.strip().lower()
+        suffixes = [
+            " underground station",
+            " overground station",
+            " dlr station",
+            " station",
+        ]
+        for suffix in suffixes:
+            if normalized.endswith(suffix):
+                normalized = normalized[: -len(suffix)].strip()
+                break
+        return normalized
+
+    def _stop_search_rank(self, stop: dict, query: str) -> tuple[int, int, str]:
+        raw_name = (stop.get("name") or "").strip()
+        normalized_name = self._normalize_station_search_text(raw_name)
+        normalized_query = self._normalize_station_search_text(query)
+        if not normalized_query:
+            normalized_query = query.strip().lower()
+
+        score = 0
+        if normalized_name == normalized_query:
+            score += 100
+        if raw_name.lower() == query.strip().lower():
+            score += 80
+        if normalized_name.startswith(normalized_query):
+            score += 60
+        elif any(word.startswith(normalized_query) for word in normalized_name.split()):
+            score += 30
+        elif normalized_query in normalized_name:
+            score += 15
+
+        if "tube" in (stop.get("modes") or []):
+            score += 5
+
+        name_len_penalty = len(normalized_name)
+        return (-score, name_len_penalty, raw_name.lower())
+
+    @staticmethod
+    def _format_search_stop_name(raw_name: str, modes: list[str]) -> str:
+        """Return a stable, human-readable station label for search results."""
+        cleaned = (raw_name or "").strip()
+        if not cleaned:
+            return cleaned
+
+        lower = cleaned.lower()
+        if lower.endswith("underground station") or lower.endswith("overground station"):
+            return cleaned
+
+        mode_set = set(modes or [])
+        if "tube" in mode_set and "overground" not in mode_set:
+            base = cleaned[:-8].strip() if lower.endswith(" station") else cleaned
+            return f"{base} Underground Station"
+        if "overground" in mode_set and "tube" not in mode_set:
+            base = cleaned[:-8].strip() if lower.endswith(" station") else cleaned
+            return f"{base} Overground Station"
+        return cleaned
 
     async def resolve_stop_point_id(self, stop_point_id: str) -> str:
         """

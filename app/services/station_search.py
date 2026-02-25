@@ -110,6 +110,57 @@ def get_station_by_crs(crs_code: str) -> Dict | None:
     return next((s for s in stations if s['crsCode'] == crs_upper), None)
 
 
+def _normalize_search_text(value: str) -> str:
+    normalized = value.strip().lower()
+    suffixes = [
+        " underground station",
+        " overground station",
+        " station",
+    ]
+    for suffix in suffixes:
+        if normalized.endswith(suffix):
+            normalized = normalized[: -len(suffix)].strip()
+            break
+    return normalized
+
+
+def _score_unified_result(result: Dict, query: str) -> int:
+    query_clean = query.strip()
+    if not query_clean:
+        return 0
+
+    query_lower = query_clean.lower()
+    query_norm = _normalize_search_text(query_clean) or query_lower
+    name = (result.get("name") or "").strip()
+    name_lower = name.lower()
+    name_norm = _normalize_search_text(name) or name_lower
+
+    score = fuzz.WRatio(query_norm, name_norm)
+
+    if name_norm == query_norm:
+        score += 120
+    elif name_lower == query_lower:
+        score += 100
+
+    if name_norm.startswith(query_norm):
+        score += 60
+    elif any(word.startswith(query_norm) for word in name_norm.split()):
+        score += 35
+    elif query_norm in name_norm:
+        score += 20
+
+    code = (result.get("code") or "").upper()
+    if result.get("provider") == "nr" and code and code == query_clean.upper():
+        score += 200
+
+    if result.get("provider") == "tfl" and (
+        name_lower.endswith("underground station") or name_lower.endswith("overground station")
+    ):
+        score += 10
+
+    return score
+
+
 async def search_stations_unified(query: str, view: str, limit: int = 10) -> List[Dict]:
     """
     Unified station search across National Rail and TfL.
@@ -126,14 +177,13 @@ async def search_stations_unified(query: str, view: str, limit: int = 10) -> Lis
     nr_view = view if view in {"departures", "arrivals", "passing"} else "departures"
     tfl_view = view if view in {"departures", "arrivals"} else "departures"
 
-    nr_limit = max(1, limit // 2)
-    tfl_limit = max(1, limit - nr_limit)
-
-    nr_results = search_stations(query, limit=limit)
+    provider_limit = max(limit * 3, 20)
+    nr_results = search_stations(query, limit=provider_limit)
     mapped_nr = [
         {
             "provider": "nr",
             "name": station["stationName"],
+            "code": station["crsCode"],
             "badge": f"NR {station['crsCode']}",
             "url": f"/board/nr/{station['crsCode']}/{nr_view}",
         }
@@ -142,7 +192,7 @@ async def search_stations_unified(query: str, view: str, limit: int = 10) -> Lis
 
     mapped_tfl: List[Dict] = []
     try:
-        mapped_tfl = await tfl_api_service.search_stop_points(query, max_results=max(limit, 12))
+        mapped_tfl = await tfl_api_service.search_stop_points(query, max_results=provider_limit)
         for item in mapped_tfl:
             code = item.get("code")
             if code:
@@ -151,21 +201,12 @@ async def search_stations_unified(query: str, view: str, limit: int = 10) -> Lis
         logger.warning("TfL search unavailable, returning NR-only results: %s", exc)
         mapped_tfl = []
 
-    nr_slice = mapped_nr[:nr_limit]
-    tfl_slice = mapped_tfl[:tfl_limit]
-
-    combined: List[Dict] = []
-    while (nr_slice or tfl_slice) and len(combined) < limit:
-        if nr_slice:
-            combined.append(nr_slice.pop(0))
-            if len(combined) >= limit:
-                break
-        if tfl_slice:
-            combined.append(tfl_slice.pop(0))
-
-    if len(combined) < limit:
-        combined.extend(mapped_nr[nr_limit : limit])
-    if len(combined) < limit:
-        combined.extend(mapped_tfl[tfl_limit : limit])
-
+    combined = mapped_nr + mapped_tfl
+    combined.sort(
+        key=lambda result: (
+            -_score_unified_result(result, query),
+            (result.get("name") or "").lower(),
+            result.get("provider") or "",
+        )
+    )
     return combined[:limit]
