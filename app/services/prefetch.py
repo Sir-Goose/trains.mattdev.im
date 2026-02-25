@@ -5,6 +5,7 @@ import logging
 from typing import Any
 
 from app.config import settings
+from app.services.display_mapper import map_tfl_predictions
 from app.services.rail_api import rail_api_service
 from app.services.tfl_api import TflAPIError, TflBoardNotFoundError, tfl_api_service
 
@@ -65,7 +66,13 @@ class PrefetchCoordinator:
         self._emit(f"queued {job_key}")
 
         async def _runner() -> None:
-            await rail_api_service.get_board(crs_code=normalized_crs, use_cache=True)
+            result = await rail_api_service.get_board(crs_code=normalized_crs, use_cache=True)
+            board = result.board
+            board_crs = (board.crs or normalized_crs).strip().upper()
+            for train in board.trains:
+                service_id = (getattr(train, "service_id", None) or "").strip()
+                if service_id:
+                    self.schedule_nr_service_prefetch(board_crs, service_id)
 
         asyncio.create_task(self._run_job(job_key, _runner))
 
@@ -81,7 +88,30 @@ class PrefetchCoordinator:
         self._emit(f"queued {job_key}")
 
         async def _runner() -> None:
-            await tfl_api_service.get_board(stop_point_id=normalized_stop_id, use_cache=True)
+            result = await tfl_api_service.get_board(stop_point_id=normalized_stop_id, use_cache=True)
+            mapped_rows = map_tfl_predictions(result.board.trains)
+            for train in mapped_rows:
+                line_id = train.get("line_id")
+                from_stop_id = train.get("from_stop_id")
+                to_stop_id = train.get("to_stop_id")
+                if not line_id or not from_stop_id or not to_stop_id:
+                    continue
+                expected_arrival = train.get("expected_arrival")
+                if expected_arrival is not None and hasattr(expected_arrival, "isoformat"):
+                    expected_arrival = expected_arrival.isoformat()
+                self.schedule_tfl_service_prefetch(
+                    {
+                        "line_id": line_id,
+                        "from_stop_id": from_stop_id,
+                        "to_stop_id": to_stop_id,
+                        "direction": train.get("direction"),
+                        "trip_id": train.get("trip_id"),
+                        "vehicle_id": train.get("vehicle_id"),
+                        "expected_arrival": expected_arrival,
+                        "station_name": train.get("station_name"),
+                        "destination_name": train.get("destination_name"),
+                    }
+                )
 
         asyncio.create_task(self._run_job(job_key, _runner))
 
