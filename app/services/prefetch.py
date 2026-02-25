@@ -19,9 +19,16 @@ class PrefetchCoordinator:
         self._active_job_keys: set[str] = set()
         self._active_lock = asyncio.Lock()
 
+    @staticmethod
+    def _emit(message: str) -> None:
+        # Explicit console output requested for operational visibility.
+        print(f"[prefetch] {message}", flush=True)
+        logger.info(message)
+
     async def _claim_job(self, job_key: str) -> bool:
         async with self._active_lock:
             if job_key in self._active_job_keys:
+                self._emit(f"skip duplicate {job_key}")
                 return False
             self._active_job_keys.add(job_key)
             return True
@@ -35,6 +42,7 @@ class PrefetchCoordinator:
             return
 
         job_key = f"nr:{crs.upper()}:{service_id}"
+        self._emit(f"queued {job_key}")
 
         async def _runner() -> None:
             await rail_api_service.get_service_route_following_cached(
@@ -64,6 +72,7 @@ class PrefetchCoordinator:
             f"tfl:{line_id}:{from_stop_id.lower()}:{to_stop_id.lower()}:"
             f"{direction}:{trip_id}:{vehicle_id}:{expected_arrival}"
         )
+        self._emit(f"queued {job_key}")
 
         async def _runner() -> None:
             await tfl_api_service.get_service_route_detail_cached(
@@ -88,16 +97,21 @@ class PrefetchCoordinator:
 
         try:
             async with self._semaphore:
+                self._emit(f"start {job_key}")
                 try:
                     await asyncio.wait_for(
                         coroutine_factory(),
                         timeout=settings.prefetch_request_timeout_seconds,
                     )
+                    self._emit(f"done {job_key}")
                 except (TflBoardNotFoundError, TflAPIError):
+                    self._emit(f"error(tfl) {job_key}")
                     logger.debug("Prefetch failed for job %s due to TfL upstream miss/error", job_key)
                 except TimeoutError:
+                    self._emit(f"timeout {job_key}")
                     logger.debug("Prefetch job timed out: %s", job_key)
                 except Exception:
+                    self._emit(f"error {job_key}")
                     logger.exception("Unhandled prefetch error for job %s", job_key)
         finally:
             await self._release_job(job_key)
