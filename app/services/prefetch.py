@@ -46,7 +46,7 @@ class PrefetchCoordinator:
         self._emit(f"queued {job_key}")
 
         async def _runner() -> None:
-            await rail_api_service.get_service_route_following_cached(
+            await rail_api_service.get_service_route_cached(
                 crs_code=crs,
                 service_id=service_id,
                 use_cache=True,

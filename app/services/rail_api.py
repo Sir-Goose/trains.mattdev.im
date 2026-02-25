@@ -450,6 +450,34 @@ class RailAPIService:
                 settings.service_prefetch_ttl_seconds,
             )
         return service
+
+    async def get_service_route_cached(
+        self,
+        crs_code: str,
+        service_id: str,
+        use_cache: bool = True,
+    ) -> Optional[ServiceDetails]:
+        cache_key = self._service_detail_cache_key(service_id)
+        if use_cache:
+            cached = cache.get(cache_key)
+            if isinstance(cached, dict):
+                try:
+                    return ServiceDetails(**cached)
+                except Exception:
+                    pass
+
+        service = await self.get_service_route(
+            crs_code=crs_code,
+            service_id=service_id,
+            use_cache=use_cache,
+        )
+        if service:
+            cache.set(
+                cache_key,
+                service.model_dump(mode="json", by_alias=True),
+                settings.service_prefetch_ttl_seconds,
+            )
+        return service
     
     def _parse_board(self, data: dict) -> Board:
         """Parse API response into Board model."""

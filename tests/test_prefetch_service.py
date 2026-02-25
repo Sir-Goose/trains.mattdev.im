@@ -17,14 +17,14 @@ async def test_prefetch_dedup_skips_duplicate_job(monkeypatch):
     coordinator = PrefetchCoordinator()
     calls: list[tuple[str, str]] = []
 
-    async def fake_get_service_route_following_cached(crs_code: str, service_id: str, use_cache: bool = True):
+    async def fake_get_service_route_cached(crs_code: str, service_id: str, use_cache: bool = True):
         calls.append((crs_code, service_id))
         await asyncio.sleep(0.05)
         return None
 
     monkeypatch.setattr(
-        "app.services.prefetch.rail_api_service.get_service_route_following_cached",
-        fake_get_service_route_following_cached,
+        "app.services.prefetch.rail_api_service.get_service_route_cached",
+        fake_get_service_route_cached,
     )
 
     try:
@@ -45,14 +45,14 @@ async def test_prefetch_releases_job_key_on_failure(monkeypatch):
     coordinator = PrefetchCoordinator()
     calls = 0
 
-    async def fake_get_service_route_following_cached(crs_code: str, service_id: str, use_cache: bool = True):
+    async def fake_get_service_route_cached(crs_code: str, service_id: str, use_cache: bool = True):
         nonlocal calls
         calls += 1
         raise RuntimeError("boom")
 
     monkeypatch.setattr(
-        "app.services.prefetch.rail_api_service.get_service_route_following_cached",
-        fake_get_service_route_following_cached,
+        "app.services.prefetch.rail_api_service.get_service_route_cached",
+        fake_get_service_route_cached,
     )
 
     try:
