@@ -12,6 +12,17 @@ A high-performance FastAPI backend for UK National Rail live departure and arriv
 - **CORS Enabled**: Ready for frontend integration
 - **Clean Architecture**: Modular structure with separation of concerns
 
+## Screenshots
+
+### Homepage
+![Leatherhead Live homepage](docs/images/homepage.png)
+
+### Departures Board
+![Leatherhead Live departures board](docs/images/board-departures.png)
+
+### Service Detail
+![Leatherhead Live service detail timeline](docs/images/service-detail.png)
+
 ## Project Structure
 
 ```
@@ -37,14 +48,15 @@ LeatherheadLive/
 
 ### Prerequisites
 
-- Python 3.10+
+- Python 3.10-3.13 (3.14 currently has dependency build issues with `pydantic-core`)
 - Virtual environment (recommended)
 - National Rail API key (get from https://www.nationalrail.co.uk/100296.aspx)
 
 ### Setup
 
-1. **Activate virtual environment**:
+1. **Create and activate virtual environment**:
    ```bash
+   python3 -m venv .venv
    source .venv/bin/activate
    ```
 
@@ -52,37 +64,17 @@ LeatherheadLive/
    ```bash
    pip install -r requirements.txt
    ```
-   
-   Or for latest versions:
-   ```bash
-   pip install fastapi "uvicorn[standard]" httpx python-dotenv pydantic-settings
-   ```
 
 3. **Configure API key**:
-   
-   Your API key is already in the `key` file. Alternatively, you can use a `.env` file:
    ```bash
    cp .env.example .env
-   # Edit .env and add your API key
+   # Edit .env and set RAIL_API_KEY
    ```
 
 ## Running the Server
 
-### Development Mode
-
 ```bash
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-Or run directly:
-```bash
-python -m app.main
-```
-
-### Production Mode
-
-```bash
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
 ```
 
 The server will start at: **http://localhost:8000**
@@ -300,7 +292,7 @@ pytest
 
 ## License
 
-MIT
+GNU Affero General Public License v3.0 (AGPL-3.0). See [`LICENSE`](LICENSE).
 
 ## Credits
 
