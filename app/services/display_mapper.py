@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections import defaultdict
 from datetime import timezone
 from typing import Iterable
+from urllib.parse import urlencode
 
 from app.models.board import Train
 from app.models.tfl import TflPrediction
@@ -112,6 +113,27 @@ def map_tfl_predictions(predictions: Iterable[TflPrediction]) -> list[dict]:
     for prediction in predictions:
         expected = _format_hhmm(prediction.expected_arrival)
         subtitle = prediction.current_location or prediction.towards
+        line_id = (prediction.line_id or "").strip().lower()
+        from_stop_id = (prediction.naptan_id or "").strip()
+        to_stop_id = (prediction.destination_naptan_id or "").strip()
+        service_url = None
+        if line_id and from_stop_id and to_stop_id:
+            query_params: dict[str, str] = {}
+            if prediction.direction:
+                query_params["direction"] = prediction.direction
+            if prediction.trip_id:
+                query_params["trip_id"] = prediction.trip_id
+            if prediction.vehicle_id:
+                query_params["vehicle_id"] = prediction.vehicle_id
+            if prediction.expected_arrival:
+                query_params["expected_arrival"] = prediction.expected_arrival.isoformat()
+            if prediction.station_name:
+                query_params["station_name"] = prediction.station_name
+            if prediction.destination_name:
+                query_params["destination_name"] = prediction.destination_name
+            service_url = f"/service/tfl/{line_id}/{from_stop_id}/{to_stop_id}"
+            if query_params:
+                service_url = f"{service_url}?{urlencode(query_params)}"
         mapped.append(
             {
                 "is_cancelled": False,
@@ -130,8 +152,13 @@ def map_tfl_predictions(predictions: Iterable[TflPrediction]) -> list[dict]:
                 "line_name": prediction.line_name,
                 "expected_arrival": prediction.expected_arrival,
                 "time_to_station": prediction.time_to_station,
-                "service_url": None,
-                "route_unavailable": False,
+                "from_stop_id": from_stop_id,
+                "to_stop_id": to_stop_id,
+                "direction": prediction.direction,
+                "trip_id": prediction.trip_id,
+                "vehicle_id": prediction.vehicle_id,
+                "service_url": service_url,
+                "route_unavailable": not bool(service_url),
             }
         )
     return mapped

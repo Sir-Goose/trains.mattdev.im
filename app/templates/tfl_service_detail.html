@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="back-button">
+        <a href="javascript:history.back()" class="back-link">
+            ← Back to board
+        </a>
+    </div>
+
+    <div class="service-header">
+        <h1 class="service-title">
+            {{ service.origin_name }} → {{ service.destination_name }}
+        </h1>
+        <div class="service-meta">
+            <span class="operator">{{ service.line_name }} (TfL)</span>
+            {% if service.direction %}
+            <span class="platform">{{ service.direction|title }}</span>
+            {% endif %}
+            <span class="platform">{{ service.mode_name|title }}</span>
+            <span class="service-mode-badge {% if service.resolution_mode == 'exact' %}service-mode-exact{% else %}service-mode-fallback{% endif %}">
+                {% if service.resolution_mode == 'exact' %}Exact match{% else %}Best effort route{% endif %}
+            </span>
+        </div>
+    </div>
+
+    {% if service.resolution_mode != 'exact' %}
+    <div class="status-banner status-banner-delayed">
+        <span class="status-icon">ℹ️</span>
+        <div>
+            <strong>Showing best effort route</strong>
+            <p>This train could not be identified uniquely, so times are estimate-only where available.</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <div id="service-timeline" hx-get="{{ refresh_url }}" hx-swap="innerHTML">
+        {% include "partials/tfl_service_timeline.html" %}
+    </div>
+
+    <div class="service-info-card">
+        <h3>Service Information</h3>
+        <dl class="info-grid">
+            <dt>Line</dt>
+            <dd>{{ service.line_name }}</dd>
+
+            <dt>Direction</dt>
+            <dd>{{ service.direction|title if service.direction else 'Unknown' }}</dd>
+
+            <dt>From</dt>
+            <dd class="monospace">{{ service.from_stop_id }}</dd>
+
+            <dt>To</dt>
+            <dd class="monospace">{{ service.to_stop_id }}</dd>
+
+            {% if service.vehicle_id %}
+            <dt>Vehicle ID</dt>
+            <dd class="monospace">{{ service.vehicle_id }}</dd>
+            {% endif %}
+
+            {% if service.trip_id %}
+            <dt>Trip ID</dt>
+            <dd class="monospace">{{ service.trip_id }}</dd>
+            {% endif %}
+        </dl>
+    </div>
+</div>
+{% endblock %}

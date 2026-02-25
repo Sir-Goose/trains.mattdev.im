@@ -575,6 +575,29 @@ button:hover {
     color: var(--warning);
 }
 
+.service-mode-badge {
+    display: inline-block;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    border: 1px solid transparent;
+}
+
+.service-mode-exact {
+    background: rgba(73, 209, 125, 0.14);
+    border-color: rgba(73, 209, 125, 0.5);
+    color: var(--success);
+}
+
+.service-mode-fallback {
+    background: rgba(242, 193, 79, 0.14);
+    border-color: rgba(242, 193, 79, 0.55);
+    color: var(--warning);
+}
+
 .status-icon {
     font-size: 1.5rem;
     flex-shrink: 0;

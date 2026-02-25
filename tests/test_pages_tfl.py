@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.models.tfl_service import TflServiceDetail, TflServiceStop
 
 
 def test_legacy_board_route_redirects_to_nr():
@@ -110,6 +111,8 @@ def test_tfl_board_page_renders_grouped_line_sections(monkeypatch):
                             "platform": "Platform 3",
                             "operator": "TfL",
                             "line_name": "Victoria",
+                            "service_url": "/service/tfl/victoria/940GZZLUGPK/940GZZLUBXN",
+                            "route_unavailable": False,
                         }
                     ],
                     "next_time_epoch": 0,
@@ -131,6 +134,8 @@ def test_tfl_board_page_renders_grouped_line_sections(monkeypatch):
                             "platform": "Platform 6",
                             "operator": "TfL",
                             "line_name": "Jubilee",
+                            "service_url": "/service/tfl/jubilee/940GZZLUGPK/940GZZLUSTD",
+                            "route_unavailable": False,
                         }
                     ],
                     "next_time_epoch": 1,
@@ -152,3 +157,47 @@ def test_tfl_board_page_renders_grouped_line_sections(monkeypatch):
     assert 'tfl-line-group-title' in response.text
     assert '>Victoria<' in response.text
     assert '>Jubilee<' in response.text
+    assert '/service/tfl/victoria/' in response.text
+
+
+def test_tfl_service_detail_page_renders_timeline(monkeypatch):
+    detail = TflServiceDetail(
+        line_id="victoria",
+        line_name="Victoria",
+        direction="northbound",
+        from_stop_id="940GZZLUBXN",
+        to_stop_id="940GZZLUGPK",
+        origin_name="Brixton Underground Station",
+        destination_name="Green Park Underground Station",
+        resolution_mode="exact",
+        mode_name="tube",
+        stops=[
+            TflServiceStop(
+                stop_id="940GZZLUBXN",
+                stop_name="Brixton Underground Station",
+                arrival_display="Due",
+                departure_display="Due",
+                is_current=True,
+            ),
+            TflServiceStop(
+                stop_id="940GZZLUGPK",
+                stop_name="Green Park Underground Station",
+                arrival_display="8 min (10:29)",
+                departure_display="8 min (10:29)",
+                is_destination=True,
+            ),
+        ],
+    )
+
+    async def fake_get_service_route_detail(**kwargs):
+        return detail
+
+    monkeypatch.setattr('app.routers.pages.tfl_api_service.get_service_route_detail', fake_get_service_route_detail)
+
+    client = TestClient(app)
+    response = client.get('/service/tfl/victoria/940GZZLUBXN/940GZZLUGPK?direction=northbound')
+
+    assert response.status_code == 200
+    assert 'Brixton Underground Station' in response.text
+    assert 'Green Park Underground Station' in response.text
+    assert 'Exact match' in response.text

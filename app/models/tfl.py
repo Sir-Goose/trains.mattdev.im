@@ -16,7 +16,11 @@ class TflPrediction(BaseModel):
     line_name: Optional[str] = Field(None, alias="lineName")
     platform_name: Optional[str] = Field(None, alias="platformName")
     direction: Optional[str] = None
+    mode_name: Optional[str] = Field(None, alias="modeName")
+    trip_id: Optional[str] = Field(None, alias="tripId")
+    vehicle_id: Optional[str] = Field(None, alias="vehicleId")
     destination_name: Optional[str] = Field(None, alias="destinationName")
+    destination_naptan_id: Optional[str] = Field(None, alias="destinationNaptanId")
     towards: Optional[str] = None
     current_location: Optional[str] = Field(None, alias="currentLocation")
     expected_arrival: Optional[datetime] = Field(None, alias="expectedArrival")

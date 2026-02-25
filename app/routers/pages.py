@@ -28,6 +28,13 @@ def validate_tfl_stop_id(stop_point_id: str) -> str:
     return stop_point_id
 
 
+def validate_tfl_line_id(line_id: str) -> str:
+    line_id = line_id.strip().lower()
+    if not line_id:
+        raise HTTPException(status_code=404, detail="Invalid TfL line id")
+    return line_id
+
+
 def validate_view(view: str, provider: str) -> str:
     if provider == "nr":
         allowed = {"departures", "arrivals", "passing"}
@@ -169,6 +176,104 @@ async def service_detail_refresh(request: Request, crs: str, service_id: str):
     return templates.TemplateResponse(
         "partials/service_timeline.html",
         {"request": request, "service": service, "timestamp": format_updated_at(service.pulledAt or service.generatedAt)},
+    )
+
+
+@router.get("/service/tfl/{line_id}/{from_stop_id}/{to_stop_id}", response_class=HTMLResponse)
+async def tfl_service_detail_page(
+    request: Request,
+    line_id: str,
+    from_stop_id: str,
+    to_stop_id: str,
+    direction: Optional[str] = None,
+    trip_id: Optional[str] = None,
+    vehicle_id: Optional[str] = None,
+    expected_arrival: Optional[str] = None,
+    station_name: Optional[str] = None,
+    destination_name: Optional[str] = None,
+):
+    line_id = validate_tfl_line_id(line_id)
+    from_stop_id = validate_tfl_stop_id(from_stop_id)
+    to_stop_id = validate_tfl_stop_id(to_stop_id)
+
+    try:
+        service = await tfl_api_service.get_service_route_detail(
+            line_id=line_id,
+            from_stop_id=from_stop_id,
+            to_stop_id=to_stop_id,
+            direction=direction,
+            trip_id=trip_id,
+            vehicle_id=vehicle_id,
+            expected_arrival=expected_arrival,
+            station_name=station_name,
+            destination_name=destination_name,
+            use_cache=True,
+        )
+    except (TflBoardNotFoundError, TflAPIError):
+        return templates.TemplateResponse(
+            "errors/service_expired.html",
+            {
+                "request": request,
+                "service_id": f"{line_id}:{from_stop_id}:{to_stop_id}",
+                "timestamp": current_time_hms(),
+            },
+            status_code=404,
+        )
+
+    refresh_url = f"/service/tfl/{line_id}/{from_stop_id}/{to_stop_id}/refresh"
+    if request.url.query:
+        refresh_url = f"{refresh_url}?{request.url.query}"
+
+    return templates.TemplateResponse(
+        "tfl_service_detail.html",
+        {
+            "request": request,
+            "service": service,
+            "refresh_url": refresh_url,
+            "timestamp": format_updated_at(service.pulled_at),
+        },
+    )
+
+
+@router.get("/service/tfl/{line_id}/{from_stop_id}/{to_stop_id}/refresh", response_class=HTMLResponse)
+async def tfl_service_detail_refresh(
+    request: Request,
+    line_id: str,
+    from_stop_id: str,
+    to_stop_id: str,
+    direction: Optional[str] = None,
+    trip_id: Optional[str] = None,
+    vehicle_id: Optional[str] = None,
+    expected_arrival: Optional[str] = None,
+    station_name: Optional[str] = None,
+    destination_name: Optional[str] = None,
+):
+    line_id = validate_tfl_line_id(line_id)
+    from_stop_id = validate_tfl_stop_id(from_stop_id)
+    to_stop_id = validate_tfl_stop_id(to_stop_id)
+
+    try:
+        service = await tfl_api_service.get_service_route_detail(
+            line_id=line_id,
+            from_stop_id=from_stop_id,
+            to_stop_id=to_stop_id,
+            direction=direction,
+            trip_id=trip_id,
+            vehicle_id=vehicle_id,
+            expected_arrival=expected_arrival,
+            station_name=station_name,
+            destination_name=destination_name,
+            use_cache=False,
+        )
+    except (TflBoardNotFoundError, TflAPIError):
+        return HTMLResponse(
+            content="<div class='error-message'>Route no longer available</div>",
+            status_code=200,
+        )
+
+    return templates.TemplateResponse(
+        "partials/tfl_service_timeline.html",
+        {"request": request, "service": service, "timestamp": format_updated_at(service.pulled_at)},
     )
 
 

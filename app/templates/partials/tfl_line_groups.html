@@ -51,7 +51,15 @@
                 </thead>
                 <tbody>
                     {% for train in group.trains %}
-                    <tr class="train-row">
+                    <tr
+                        class="train-row{% if train.service_url %} train-row-clickable{% endif %}"
+                        {% if train.service_url %}
+                        onclick="window.location.href='{{ train.service_url }}'"
+                        role="link"
+                        tabindex="0"
+                        onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href='{{ train.service_url }}';}"
+                        {% endif %}
+                    >
                         <td>
                             <span class="time-display {{ train.time_status_class }}">
                                 {% if view == 'arrivals' %}
@@ -71,6 +79,9 @@
                             <div class="meta-subtle">
                                 {% if train.destination_via_prefix %}{{ train.destination_via_prefix }} {% endif %}{{ train.destination_via }}
                             </div>
+                            {% endif %}
+                            {% if train.route_unavailable %}
+                            <div class="route-unavailable">Route unavailable</div>
                             {% endif %}
                         </td>
                         <td><span class="platform">{{ train.platform or 'TBC' }}</span></td>

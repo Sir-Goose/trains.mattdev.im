@@ -99,3 +99,98 @@ async def test_resolve_stop_point_id_maps_hub_to_mode_child(monkeypatch):
     resolved = await service.resolve_stop_point_id("HUBBDS")
 
     assert resolved == "940GZZLUBND"
+
+
+def test_match_prediction_for_click_prefers_trip_id():
+    service = TflAPIService()
+    p1 = TflPrediction(
+        lineId="victoria",
+        destinationNaptanId="940GZZLUGPK",
+        tripId="trip-a",
+        vehicleId="veh-1",
+        expectedArrival="2026-01-01T12:01:00Z",
+    )
+    p2 = TflPrediction(
+        lineId="victoria",
+        destinationNaptanId="940GZZLUGPK",
+        tripId="trip-b",
+        vehicleId="veh-2",
+        expectedArrival="2026-01-01T12:02:00Z",
+    )
+
+    matched = service._match_prediction_for_click(
+        predictions=[p1, p2],
+        line_id="victoria",
+        to_stop_id="940GZZLUGPK",
+        direction=None,
+        trip_id="trip-b",
+        vehicle_id=None,
+        expected_arrival=None,
+    )
+
+    assert matched is not None
+    assert matched.trip_id == "trip-b"
+
+
+@pytest.mark.asyncio
+async def test_get_service_route_detail_builds_stops_from_fallback(monkeypatch):
+    service = TflAPIService()
+
+    async def fake_resolve_stop_point_id(stop_id: str):
+        return stop_id
+
+    async def fake_get_predictions_for_stop(stop_point_id: str, use_cache: bool = True):
+        return [
+            TflPrediction(
+                lineId="victoria",
+                lineName="Victoria",
+                stationName="Brixton Underground Station",
+                destinationName="Green Park Underground Station",
+                destinationNaptanId="940GZZLUGPK",
+                naptanId=stop_point_id,
+                direction="inbound",
+                expectedArrival="2026-01-01T12:00:00Z",
+            )
+        ]
+
+    async def fake_get_route_sequence(line_id: str, direction: str, use_cache: bool = True):
+        return {}
+
+    async def fake_get_timetable_payload(line_id: str, from_stop_id: str, to_stop_id: str, use_cache: bool = True):
+        return {
+            "stations": [
+                {"id": from_stop_id, "name": "Brixton Underground Station"},
+                {"id": to_stop_id, "name": "Green Park Underground Station"},
+            ],
+            "timetable": {
+                "routes": [
+                    {
+                        "stationIntervals": [
+                            {
+                                "intervals": [
+                                    {"stopId": from_stop_id, "timeToArrival": 0},
+                                    {"stopId": to_stop_id, "timeToArrival": 8},
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+        }
+
+    monkeypatch.setattr(service, "resolve_stop_point_id", fake_resolve_stop_point_id)
+    monkeypatch.setattr(service, "_get_predictions_for_stop", fake_get_predictions_for_stop)
+    monkeypatch.setattr(service, "_get_route_sequence", fake_get_route_sequence)
+    monkeypatch.setattr(service, "_get_timetable_payload", fake_get_timetable_payload)
+
+    detail = await service.get_service_route_detail(
+        line_id="victoria",
+        from_stop_id="940GZZLUBXN",
+        to_stop_id="940GZZLUGPK",
+        direction="inbound",
+    )
+
+    assert detail.line_name == "Victoria"
+    assert len(detail.stops) >= 2
+    assert detail.stops[0].is_current is True
+    assert any(stop.is_destination for stop in detail.stops)

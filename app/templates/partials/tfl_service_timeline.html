@@ -1,0 +1,42 @@
+<div class="journey-timeline">
+    {% set ns = namespace(index=0, total=(service.stops|length)) %}
+    {% for stop in service.stops %}
+    {% set ns.index = ns.index + 1 %}
+    <div class="timeline-stop">
+        <div class="timeline-marker">
+            <div class="marker-icon marker-route"><span class="marker-inner" aria-hidden="true"></span></div>
+            {% if ns.index < ns.total %}
+            <div class="timeline-line"></div>
+            {% endif %}
+        </div>
+
+        <div class="stop-details">
+            <div class="stop-header">
+                <a class="stop-link" href="/board/tfl/{{ stop.stop_id }}/departures">
+                    <h3 class="stop-name">{{ stop.stop_name }}</h3>
+                </a>
+                <a class="stop-crs stop-crs-link" href="/board/tfl/{{ stop.stop_id }}/departures">{{ stop.stop_id }}</a>
+            </div>
+
+            <div class="stop-times">
+                <div class="time-row">
+                    <span class="time-label">Arrival:</span>
+                    <span class="time-value">
+                        {{ stop.arrival_display }}
+                        {% if stop.is_current %}<span class="actual-badge">Current</span>{% endif %}
+                        {% if stop.is_destination %}<span class="actual-badge">Destination</span>{% endif %}
+                    </span>
+                </div>
+                <div class="time-row">
+                    <span class="time-label">Departure:</span>
+                    <span class="time-value">{{ stop.departure_display }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+    document.getElementById('update-time').textContent = '{{ timestamp }}';
+</script>
