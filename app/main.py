@@ -1,3 +1,6 @@
+import subprocess
+from pathlib import Path
+
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
@@ -9,6 +12,23 @@ from app.config import settings
 from app.routers import boards, pages, stations
 from app.services.rail_api import rail_api_service
 from app.services.tfl_api import tfl_api_service
+
+
+def detect_asset_version() -> str:
+    """Version token used to cache-bust static assets on deploy."""
+    repo_root = Path(__file__).resolve().parent.parent
+    try:
+        sha = subprocess.check_output(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=repo_root,
+            text=True,
+            stderr=subprocess.DEVNULL,
+        ).strip()
+        if sha:
+            return sha
+    except Exception:
+        pass
+    return settings.app_version
 
 
 @asynccontextmanager
@@ -31,6 +51,7 @@ app = FastAPI(
     redoc_url="/redoc",
     lifespan=lifespan,
 )
+app.state.asset_version = detect_asset_version()
 
 # Configure Jinja2 templates
 templates = Jinja2Templates(directory="app/templates")
