@@ -6,7 +6,7 @@ from fastapi.templating import Jinja2Templates
 
 from app.middleware.cache import cache
 from app.models.tfl import TflBoard
-from app.services.display_mapper import map_nr_trains, map_tfl_predictions
+from app.services.display_mapper import group_tfl_trains_by_line, map_nr_trains, map_tfl_predictions
 from app.services.rail_api import BoardNotFoundError, RailAPIError, rail_api_service
 from app.services.tfl_api import TflAPIError, TflBoardNotFoundError, tfl_api_service
 from app.utils.time import current_time_hms, format_updated_at
@@ -95,9 +95,11 @@ async def get_tfl_board_data(stop_point_id: str, view: str):
         result = await tfl_api_service.get_board(stop_point_id, use_cache=True)
         board = result.board
         predictions = tfl_api_service.predictions_for_view(board.trains, view)
+        mapped_trains = map_tfl_predictions(predictions)
         updated_timestamp = format_updated_at(board.pulled_at or board.generated_at)
         return {
-            "trains": map_tfl_predictions(predictions),
+            "trains": mapped_trains,
+            "line_groups": group_tfl_trains_by_line(mapped_trains, board.line_status),
             "total_trains": len(predictions),
             "station_name": board.station_name,
             "error": False,
@@ -111,9 +113,11 @@ async def get_tfl_board_data(stop_point_id: str, view: str):
         if isinstance(cached_board, dict):
             board = TflBoard(**cached_board)
             predictions = tfl_api_service.predictions_for_view(board.trains, view)
+            mapped_trains = map_tfl_predictions(predictions)
             updated_timestamp = format_updated_at(board.pulled_at or board.generated_at)
             return {
-                "trains": map_tfl_predictions(predictions),
+                "trains": mapped_trains,
+                "line_groups": group_tfl_trains_by_line(mapped_trains, board.line_status),
                 "total_trains": len(predictions),
                 "station_name": board.station_name,
                 "error": True,
@@ -221,6 +225,7 @@ async def board_view_tfl(request: Request, stop_point_id: str, view: str):
             "station_name": board["station_name"],
             "view": view,
             "trains": board["trains"],
+            "line_groups": board["line_groups"],
             "total_trains": board["total_trains"],
             "error": board["error"],
             "timestamp": board["timestamp"],
@@ -266,6 +271,7 @@ async def board_content_tfl(request: Request, stop_point_id: str, view: str):
         crs=stop_point_id,
         view=view,
         trains=board["trains"],
+        line_groups=board["line_groups"],
         error=board["error"],
         timestamp=board["timestamp"],
         line_status=board["line_status"],
@@ -315,6 +321,7 @@ async def board_refresh_tfl(request: Request, stop_point_id: str, view: str):
                 "crs": stop_point_id,
                 "view": view,
                 "trains": board["trains"],
+                "line_groups": board["line_groups"],
                 "error": board["error"],
                 "timestamp": board["timestamp"],
                 "line_status": board["line_status"],

@@ -1,0 +1,87 @@
+{% if error %}
+<div class="error-message">
+    ⚠️ Unable to fetch live data. Showing last available information.
+</div>
+{% endif %}
+
+{% if line_groups|length == 0 %}
+<div class="empty-state">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    <p>No trains scheduled</p>
+</div>
+{% else %}
+<div class="tfl-line-groups">
+    {% for group in line_groups %}
+    <section class="tfl-line-group">
+        <header class="tfl-line-group-header">
+            <div class="tfl-line-group-title">{{ group.line_name }}</div>
+            {% if group.status %}
+            <div class="tfl-line-status{% if group.status.status_description and group.status.status_description != 'Good Service' %} tfl-line-status-warning{% endif %}">
+                <span>{{ group.status.status_description or 'Status unavailable' }}</span>
+                {% if group.status.reason %}
+                <small>{{ group.status.reason }}</small>
+                {% endif %}
+            </div>
+            {% endif %}
+        </header>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    {% if view == 'arrivals' %}
+                    <tr>
+                        <th>Time</th>
+                        <th>Origin</th>
+                        <th>Platform</th>
+                        <th class="hide-mobile">Operator</th>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <th>Time</th>
+                        <th>Destination</th>
+                        <th>Platform</th>
+                        <th class="hide-mobile">Operator</th>
+                    </tr>
+                    {% endif %}
+                </thead>
+                <tbody>
+                    {% for train in group.trains %}
+                    <tr class="train-row">
+                        <td>
+                            <span class="time-display {{ train.time_status_class }}">
+                                {% if view == 'arrivals' %}
+                                    <strong>{{ train.display_time_arrival }}</strong>
+                                {% else %}
+                                    <strong>{{ train.display_time_departure }}</strong>
+                                {% endif %}
+                            </span>
+                        </td>
+                        <td>
+                            {% if view == 'arrivals' %}
+                                {{ train.origin_name }}
+                            {% else %}
+                                {{ train.destination_name }}
+                            {% endif %}
+                            {% if train.destination_via %}
+                            <div class="meta-subtle">
+                                {% if train.destination_via_prefix %}{{ train.destination_via_prefix }} {% endif %}{{ train.destination_via }}
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td><span class="platform">{{ train.platform or 'TBC' }}</span></td>
+                        <td class="hide-mobile">{{ train.operator }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+    {% endfor %}
+</div>
+{% endif %}
+
+<script>
+    document.getElementById('update-time').textContent = '{{ timestamp }}';
+</script>

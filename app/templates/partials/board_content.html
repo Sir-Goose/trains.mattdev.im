@@ -2,8 +2,9 @@
      hx-get="/board/{{ provider }}/{{ board_id }}/{{ view }}/refresh"
      hx-trigger="every 60s"
      hx-swap="innerHTML">
-    {% if provider == 'tfl' and line_status %}
-    {% include 'partials/tfl_status.html' %}
-    {% endif %}
+    {% if provider == 'tfl' %}
+    {% include 'partials/tfl_line_groups.html' %}
+    {% else %}
     {% include 'partials/' + view + '_table.html' %}
+    {% endif %}
 </div>

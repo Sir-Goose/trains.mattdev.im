@@ -22,6 +22,7 @@ def test_tfl_board_page_renders_provider_badge(monkeypatch):
     async def fake_get_tfl_board_data(stop_point_id: str, view: str):
         return {
             "trains": [],
+            "line_groups": [],
             "total_trains": 0,
             "station_name": "Brixton Underground Station",
             "error": False,
@@ -39,25 +40,35 @@ def test_tfl_board_page_renders_provider_badge(monkeypatch):
 
 
 def test_tfl_board_page_does_not_prefix_location_with_via(monkeypatch):
+    row = {
+        "is_cancelled": False,
+        "time_status_class": "time-ontime",
+        "scheduled_departure_time": "10:21",
+        "scheduled_arrival_time": "10:21",
+        "display_time_departure": "10:21",
+        "display_time_arrival": "10:21",
+        "destination_name": "Walthamstow Central Underground Station",
+        "destination_via": "Approaching Green Park",
+        "destination_via_prefix": None,
+        "origin_name": "Northbound",
+        "platform": "Platform 3",
+        "operator": "TfL",
+        "line_name": "Victoria",
+        "line_id": "victoria",
+        "service_url": None,
+        "route_unavailable": False,
+    }
+
     async def fake_get_tfl_board_data(stop_point_id: str, view: str):
         return {
-            "trains": [
+            "trains": [row],
+            "line_groups": [
                 {
-                    "is_cancelled": False,
-                    "time_status_class": "time-ontime",
-                    "scheduled_departure_time": "10:21",
-                    "scheduled_arrival_time": "10:21",
-                    "display_time_departure": "10:21",
-                    "display_time_arrival": "10:21",
-                    "destination_name": "Walthamstow Central Underground Station",
-                    "destination_via": "Approaching Green Park",
-                    "destination_via_prefix": None,
-                    "origin_name": "Northbound",
-                    "platform": "Platform 3",
-                    "operator": "TfL",
+                    "line_id": "victoria",
                     "line_name": "Victoria",
-                    "service_url": None,
-                    "route_unavailable": False,
+                    "status": None,
+                    "trains": [row],
+                    "next_time_epoch": 0,
                 }
             ],
             "total_trains": 1,
@@ -75,3 +86,68 @@ def test_tfl_board_page_does_not_prefix_location_with_via(monkeypatch):
     assert response.status_code == 200
     assert 'Approaching Green Park' in response.text
     assert 'via Approaching Green Park' not in response.text
+
+
+def test_tfl_board_page_renders_grouped_line_sections(monkeypatch):
+    async def fake_get_tfl_board_data(stop_point_id: str, view: str):
+        return {
+            "trains": [],
+            "line_groups": [
+                {
+                    "line_id": "victoria",
+                    "line_name": "Victoria",
+                    "status": None,
+                    "trains": [
+                        {
+                            "is_cancelled": False,
+                            "time_status_class": "time-ontime",
+                            "display_time_departure": "10:21",
+                            "display_time_arrival": "10:21",
+                            "destination_name": "Walthamstow Central Underground Station",
+                            "destination_via": "Approaching Green Park",
+                            "destination_via_prefix": None,
+                            "origin_name": "Northbound",
+                            "platform": "Platform 3",
+                            "operator": "TfL",
+                            "line_name": "Victoria",
+                        }
+                    ],
+                    "next_time_epoch": 0,
+                },
+                {
+                    "line_id": "jubilee",
+                    "line_name": "Jubilee",
+                    "status": None,
+                    "trains": [
+                        {
+                            "is_cancelled": False,
+                            "time_status_class": "time-ontime",
+                            "display_time_departure": "10:22",
+                            "display_time_arrival": "10:22",
+                            "destination_name": "Stratford Underground Station",
+                            "destination_via": "Between Bond Street and Green Park",
+                            "destination_via_prefix": None,
+                            "origin_name": "Southbound",
+                            "platform": "Platform 6",
+                            "operator": "TfL",
+                            "line_name": "Jubilee",
+                        }
+                    ],
+                    "next_time_epoch": 1,
+                },
+            ],
+            "total_trains": 2,
+            "station_name": "Green Park Underground Station",
+            "error": False,
+            "timestamp": "10:20:00",
+            "line_status": [],
+        }
+
+    monkeypatch.setattr('app.routers.pages.get_tfl_board_data', fake_get_tfl_board_data)
+
+    client = TestClient(app)
+    response = client.get('/board/tfl/HUBGPK/departures')
+
+    assert response.status_code == 200
+    assert 'tfl-line-group-title">Victoria' in response.text
+    assert 'tfl-line-group-title">Jubilee' in response.text

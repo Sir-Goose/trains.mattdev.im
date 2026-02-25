@@ -795,6 +795,60 @@ button:hover {
     color: var(--text-secondary);
 }
 
+.tfl-line-groups {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.tfl-line-group {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.008) 0%, rgba(255, 255, 255, 0.01) 100%), var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.75rem;
+}
+
+.tfl-line-group-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.tfl-line-group-title {
+    font-family: "DIN Condensed", "Franklin Gothic Medium", "Arial Narrow", sans-serif;
+    font-size: 1.2rem;
+    line-height: 1.1;
+}
+
+.tfl-line-status {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    background: rgba(73, 209, 125, 0.1);
+    border: 1px solid rgba(73, 209, 125, 0.45);
+    border-radius: 8px;
+    padding: 0.35rem 0.55rem;
+    font-size: 0.76rem;
+    max-width: 60%;
+}
+
+.tfl-line-status span {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.tfl-line-status small {
+    color: var(--text-secondary);
+    line-height: 1.35;
+}
+
+.tfl-line-status-warning {
+    background: rgba(242, 193, 79, 0.1);
+    border-color: rgba(242, 193, 79, 0.55);
+}
+
 .error-state {
     text-align: center;
     padding: 4rem 1rem;
@@ -952,6 +1006,14 @@ button:hover {
 
     .info-grid {
         gap: 0.5rem 1rem;
+    }
+
+    .tfl-line-group-header {
+        flex-direction: column;
+    }
+
+    .tfl-line-status {
+        max-width: 100%;
     }
 }
 
