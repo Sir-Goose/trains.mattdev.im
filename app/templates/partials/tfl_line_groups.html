@@ -14,9 +14,12 @@
 {% else %}
 <div class="tfl-line-groups">
     {% for group in line_groups %}
-    <section class="tfl-line-group">
+    <section class="tfl-line-group" style="--line-color: {{ group.line_color }}; --line-tint: {{ group.line_tint }}; --line-border-tint: {{ group.line_border_tint }};">
         <header class="tfl-line-group-header">
-            <div class="tfl-line-group-title">{{ group.line_name }}</div>
+            <div class="tfl-line-group-title">
+                <span class="tfl-line-dot" aria-hidden="true"></span>
+                <span class="tfl-line-name">{{ group.line_name }}</span>
+            </div>
             {% if group.status %}
             <div class="tfl-line-status{% if group.status.status_description and group.status.status_description != 'Good Service' %} tfl-line-status-warning{% endif %}">
                 <span>{{ group.status.status_description or 'Status unavailable' }}</span>

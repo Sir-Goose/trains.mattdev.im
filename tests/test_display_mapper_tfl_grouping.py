@@ -42,6 +42,8 @@ def test_group_tfl_trains_by_line_groups_and_sorts_soonest_first():
     assert groups[0]["line_name"] == "Victoria"
     assert groups[1]["line_name"] == "Jubilee"
     assert groups[0]["status"].status_description == "Good Service"
+    assert groups[0]["line_color"] == "#0098D4"
+    assert groups[1]["line_color"] == "#A0A5A9"
 
 
 def test_group_tfl_trains_by_line_handles_unknown_line_last():
@@ -64,3 +66,4 @@ def test_group_tfl_trains_by_line_handles_unknown_line_last():
 
     assert groups[0]["line_name"] == "Victoria"
     assert groups[-1]["line_name"] == "Unknown line"
+    assert groups[-1]["line_color"] == "#5CC8FF"

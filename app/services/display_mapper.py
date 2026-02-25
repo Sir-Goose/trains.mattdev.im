@@ -7,11 +7,78 @@ from typing import Iterable
 from app.models.board import Train
 from app.models.tfl import TflPrediction
 
+DEFAULT_TFL_LINE_COLOR = "#5CC8FF"
+
+TFL_LINE_COLORS_BY_ID = {
+    "bakerloo": "#B36305",
+    "central": "#E32017",
+    "circle": "#FFD300",
+    "district": "#00782A",
+    "hammersmith-city": "#F3A9BB",
+    "hammersmithandcity": "#F3A9BB",
+    "jubilee": "#A0A5A9",
+    "metropolitan": "#9B0056",
+    "northern": "#000000",
+    "piccadilly": "#003688",
+    "victoria": "#0098D4",
+    "waterloo-city": "#95CDBA",
+    "waterlooandcity": "#95CDBA",
+    "london-overground": "#EE7C0E",
+    "overground": "#EE7C0E",
+    "liberty": "#61686B",
+    "lioness": "#FDB71A",
+    "mildmay": "#0055B8",
+    "suffragette": "#00A651",
+    "weaver": "#78206E",
+    "windrush": "#D3222A",
+}
+
+TFL_LINE_COLORS_BY_NAME = {
+    "bakerloo": "#B36305",
+    "central": "#E32017",
+    "circle": "#FFD300",
+    "district": "#00782A",
+    "hammersmith & city": "#F3A9BB",
+    "jubilee": "#A0A5A9",
+    "metropolitan": "#9B0056",
+    "northern": "#000000",
+    "piccadilly": "#003688",
+    "victoria": "#0098D4",
+    "waterloo & city": "#95CDBA",
+    "london overground": "#EE7C0E",
+    "liberty": "#61686B",
+    "lioness": "#FDB71A",
+    "mildmay": "#0055B8",
+    "suffragette": "#00A651",
+    "weaver": "#78206E",
+    "windrush": "#D3222A",
+}
+
 
 def _format_hhmm(dt) -> str:
     if not dt:
         return "No information"
     return dt.astimezone(timezone.utc).strftime("%H:%M")
+
+
+def _hex_to_rgba(hex_color: str, alpha: float) -> str:
+    color = hex_color.lstrip("#")
+    if len(color) != 6:
+        return f"rgba(92, 200, 255, {alpha})"
+    r = int(color[0:2], 16)
+    g = int(color[2:4], 16)
+    b = int(color[4:6], 16)
+    return f"rgba({r}, {g}, {b}, {alpha})"
+
+
+def _tfl_line_color(line_id: str | None, line_name: str | None) -> str:
+    normalized_id = (line_id or "").strip().lower()
+    normalized_name = (line_name or "").strip().lower()
+    if normalized_id and normalized_id in TFL_LINE_COLORS_BY_ID:
+        return TFL_LINE_COLORS_BY_ID[normalized_id]
+    if normalized_name and normalized_name in TFL_LINE_COLORS_BY_NAME:
+        return TFL_LINE_COLORS_BY_NAME[normalized_name]
+    return DEFAULT_TFL_LINE_COLOR
 
 
 def map_nr_trains(crs: str, trains: Iterable[Train]) -> list[dict]:
@@ -110,6 +177,7 @@ def group_tfl_trains_by_line(trains: list[dict], line_status: list) -> list[dict
             grouped[group_key] = {
                 "line_id": line_id or "unknown",
                 "line_name": line_name,
+                "line_color": _tfl_line_color(line_id, line_name),
                 "status": status,
                 "trains": [],
                 "next_time_epoch": None,
@@ -129,6 +197,8 @@ def group_tfl_trains_by_line(trains: list[dict], line_status: list) -> list[dict
         earliest = earliest_sort_tuple(rows)
         group["trains"] = rows
         group["next_time_epoch"] = None if earliest[1] == float("inf") else earliest[1]
+        group["line_tint"] = _hex_to_rgba(group["line_color"], 0.12)
+        group["line_border_tint"] = _hex_to_rgba(group["line_color"], 0.42)
         line_groups.append(group)
 
     line_groups.sort(

@@ -149,5 +149,6 @@ def test_tfl_board_page_renders_grouped_line_sections(monkeypatch):
     response = client.get('/board/tfl/HUBGPK/departures')
 
     assert response.status_code == 200
-    assert 'tfl-line-group-title">Victoria' in response.text
-    assert 'tfl-line-group-title">Jubilee' in response.text
+    assert 'tfl-line-group-title' in response.text
+    assert '>Victoria<' in response.text
+    assert '>Jubilee<' in response.text

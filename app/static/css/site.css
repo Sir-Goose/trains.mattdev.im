@@ -804,6 +804,8 @@ button:hover {
 .tfl-line-group {
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.008) 0%, rgba(255, 255, 255, 0.01) 100%), var(--bg-secondary);
     border: 1px solid var(--border);
+    border-left: 4px solid var(--line-color, var(--accent));
+    box-shadow: inset 0 1px 0 var(--line-tint, rgba(92, 200, 255, 0.12));
     border-radius: 10px;
     padding: 0.75rem;
 }
@@ -820,14 +822,31 @@ button:hover {
     font-family: "DIN Condensed", "Franklin Gothic Medium", "Arial Narrow", sans-serif;
     font-size: 1.2rem;
     line-height: 1.1;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.tfl-line-dot {
+    width: 0.72rem;
+    height: 0.72rem;
+    border-radius: 999px;
+    background: var(--line-color, var(--accent));
+    box-shadow: 0 0 0 2px var(--line-border-tint, rgba(92, 200, 255, 0.42));
+    flex-shrink: 0;
+}
+
+.tfl-line-name {
+    display: inline-block;
+    transform: translateY(1px);
 }
 
 .tfl-line-status {
     display: flex;
     flex-direction: column;
     gap: 0.2rem;
-    background: rgba(73, 209, 125, 0.1);
-    border: 1px solid rgba(73, 209, 125, 0.45);
+    background: var(--line-tint, rgba(73, 209, 125, 0.1));
+    border: 1px solid var(--line-border-tint, rgba(73, 209, 125, 0.45));
     border-radius: 8px;
     padding: 0.35rem 0.55rem;
     font-size: 0.76rem;
@@ -845,7 +864,7 @@ button:hover {
 }
 
 .tfl-line-status-warning {
-    background: rgba(242, 193, 79, 0.1);
+    background: linear-gradient(180deg, rgba(242, 193, 79, 0.1) 0%, var(--line-tint, rgba(242, 193, 79, 0.08)) 100%);
     border-color: rgba(242, 193, 79, 0.55);
 }
 
