@@ -2,17 +2,16 @@
 Station search service with fuzzy matching
 """
 import logging
-from rapidfuzz import fuzz, process
+from rapidfuzz import fuzz
 from functools import lru_cache
 import json
 from pathlib import Path
 from typing import List, Dict
 
-from app.services.tfl_api import TflAPIError, tfl_api_service
-
 logger = logging.getLogger(__name__)
 
 STATIONS_FILE = Path(__file__).parent.parent / "static" / "data" / "stations.json"
+TFL_STATIONS_FILE = Path(__file__).parent.parent / "static" / "data" / "tfl_stations.json"
 
 @lru_cache(maxsize=1)
 def load_stations() -> List[Dict]:
@@ -22,6 +21,107 @@ def load_stations() -> List[Dict]:
     """
     with open(STATIONS_FILE) as f:
         return json.load(f)
+
+
+@lru_cache(maxsize=1)
+def load_tfl_stations() -> List[Dict]:
+    """
+    Load local TfL stations index from JSON (cached in memory).
+    Returns empty list if file is missing/invalid.
+    """
+    try:
+        with open(TFL_STATIONS_FILE) as f:
+            data = json.load(f)
+            return data if isinstance(data, list) else []
+    except FileNotFoundError:
+        logger.warning("Local TfL stations file missing at %s", TFL_STATIONS_FILE)
+        return []
+    except json.JSONDecodeError:
+        logger.warning("Local TfL stations file is invalid JSON at %s", TFL_STATIONS_FILE)
+        return []
+
+
+def _format_tfl_search_name(raw_name: str, modes: list[str]) -> str:
+    cleaned = (raw_name or "").strip()
+    if not cleaned:
+        return cleaned
+
+    lower = cleaned.lower()
+    if lower.endswith("underground station") or lower.endswith("overground station"):
+        return cleaned
+
+    mode_set = set(modes or [])
+    if "tube" in mode_set and "overground" not in mode_set:
+        base = cleaned[:-8].strip() if lower.endswith(" station") else cleaned
+        return f"{base} Underground Station"
+    if "overground" in mode_set and "tube" not in mode_set:
+        base = cleaned[:-8].strip() if lower.endswith(" station") else cleaned
+        return f"{base} Overground Station"
+    return cleaned
+
+
+def search_tfl_stations_local(query: str, limit: int = 10) -> List[Dict]:
+    """
+    Fuzzy search local TfL station index.
+    Returns provider-ready search rows.
+    """
+    if not query or len(query.strip()) == 0:
+        return []
+
+    stations = load_tfl_stations()
+    query_clean = query.strip()
+    query_norm = _normalize_search_text(query_clean) or query_clean.lower()
+    scored: List[tuple[Dict, int]] = []
+
+    for station in stations:
+        raw_name = (station.get("name") or "").strip()
+        station_id = (station.get("id") or "").strip()
+        if not raw_name or not station_id:
+            continue
+
+        modes = [mode for mode in (station.get("modes") or []) if mode in {"tube", "overground"}]
+        if not modes:
+            continue
+
+        name_norm = _normalize_search_text(raw_name) or raw_name.lower()
+        score = fuzz.WRatio(query_norm, name_norm)
+
+        if name_norm == query_norm:
+            score += 120
+        elif raw_name.lower() == query_clean.lower():
+            score += 100
+
+        if name_norm.startswith(query_norm):
+            score += 60
+        elif any(word.startswith(query_norm) for word in name_norm.split()):
+            score += 30
+        elif query_norm in name_norm:
+            score += 15
+
+        if "tube" in modes:
+            score += 5
+
+        scored.append((station, score))
+
+    scored.sort(key=lambda item: (-item[1], (item[0].get("name") or "").lower(), item[0].get("id") or ""))
+
+    results: List[Dict] = []
+    for station, _ in scored[:limit]:
+        modes = [mode for mode in (station.get("modes") or []) if mode in {"tube", "overground"}]
+        mode_label = "Overground" if "overground" in modes and "tube" not in modes else "Tube"
+        station_id = station.get("id")
+        display_name = _format_tfl_search_name(station.get("name") or "", modes)
+        results.append(
+            {
+                "provider": "tfl",
+                "name": display_name,
+                "code": station_id,
+                "badge": f"TfL {mode_label}",
+                "url": f"/board/tfl/{station_id}/departures",
+            }
+        )
+
+    return results
 
 
 def search_stations(query: str, limit: int = 10) -> List[Dict]:
@@ -190,16 +290,11 @@ async def search_stations_unified(query: str, view: str, limit: int = 10) -> Lis
         for station in nr_results
     ]
 
-    mapped_tfl: List[Dict] = []
-    try:
-        mapped_tfl = await tfl_api_service.search_stop_points(query, max_results=provider_limit)
-        for item in mapped_tfl:
-            code = item.get("code")
-            if code:
-                item["url"] = f"/board/tfl/{code}/{tfl_view}"
-    except TflAPIError as exc:
-        logger.warning("TfL search unavailable, returning NR-only results: %s", exc)
-        mapped_tfl = []
+    mapped_tfl = search_tfl_stations_local(query, limit=provider_limit)
+    for item in mapped_tfl:
+        code = item.get("code")
+        if code:
+            item["url"] = f"/board/tfl/{code}/{tfl_view}"
 
     combined = mapped_nr + mapped_tfl
     combined.sort(

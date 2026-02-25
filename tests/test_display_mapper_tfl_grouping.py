@@ -90,3 +90,19 @@ def test_map_tfl_predictions_builds_service_url():
     assert "/service/tfl/victoria/940GZZLUBXN/940GZZLUGPK" in mapped["service_url"]
     assert "trip_id=trip-1" in mapped["service_url"]
     assert mapped["route_unavailable"] is False
+
+
+def test_map_tfl_predictions_normalizes_unknown_platform_to_none():
+    prediction = TflPrediction(
+        lineId="mildmay",
+        lineName="Mildmay",
+        naptanId="910GACTNCTL",
+        destinationNaptanId="910GCLPHMJC",
+        destinationName="Clapham Junction Rail Station",
+        platformName="Unknown",
+        expectedArrival="2026-01-01T12:00:00Z",
+    )
+
+    mapped = map_tfl_predictions([prediction])[0]
+
+    assert mapped["platform"] is None

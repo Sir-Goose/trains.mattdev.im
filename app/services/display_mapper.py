@@ -62,6 +62,27 @@ def _format_hhmm(dt) -> str:
     return dt.astimezone(timezone.utc).strftime("%H:%M")
 
 
+def _normalize_tfl_platform(value: str | None) -> str | None:
+    if not value:
+        return None
+    cleaned = value.strip()
+    if not cleaned:
+        return None
+
+    unknown_tokens = {
+        "unknown",
+        "platform unknown",
+        "n/a",
+        "na",
+        "none",
+        "-",
+        "?",
+    }
+    if cleaned.lower() in unknown_tokens:
+        return None
+    return cleaned
+
+
 def _hex_to_rgba(hex_color: str, alpha: float) -> str:
     color = hex_color.lstrip("#")
     if len(color) != 6:
@@ -146,7 +167,7 @@ def map_tfl_predictions(predictions: Iterable[TflPrediction]) -> list[dict]:
                 "destination_via": subtitle,
                 "destination_via_prefix": None,
                 "origin_name": prediction.towards,
-                "platform": prediction.platform_name,
+                "platform": _normalize_tfl_platform(prediction.platform_name),
                 "operator": "TfL",
                 "line_id": prediction.line_id,
                 "line_name": prediction.line_name,

@@ -78,6 +78,13 @@ LeatherheadLive/
    - `key` for National Rail
    - `tfl_key` for TfL
 
+4. **Refresh local TfL station index (recommended before deploys)**:
+   ```bash
+   python -m app.tools.refresh_tfl_stations
+   ```
+   This writes `app/static/data/tfl_stations.json`, used by `/api/stations/search` for fast local TfL autocomplete.
+   If refresh fails, National Rail search still works and TfL search falls back to no local matches until the file is regenerated.
+
 ## Running the Server
 
 ```bash
