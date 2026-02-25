@@ -1,46 +1,56 @@
 # Leatherhead Live - Train Board Web App
 
-A FastAPI-powered frontend web app for UK National Rail and TfL (Tube/Overground) live departure and arrival boards, with API routes supporting the UI.
+A FastAPI-powered web app for UK National Rail and TfL (Tube/Overground/DLR) live departure and arrival boards, with JSON API routes supporting the UI.
 
 ## Features
 
-- **Fast & Async**: Built with FastAPI and async/await for maximum performance
-- **Intelligent Caching**: 60-second in-memory cache to reduce API load
-- **Multi-Station Support**: Works with any UK station CRS code
-- **Provider Support**: National Rail + TfL Tube/Overground/DLR boards
-- **Type-Safe**: Full Pydantic validation for requests and responses
-- **Auto Documentation**: Interactive API docs at `/docs`
-- **CORS Enabled**: Ready for frontend integration
-- **Clean Architecture**: Modular structure with separation of concerns
+- Fast async API + web UI (FastAPI + httpx)
+- Provider support: National Rail + TfL (Tube, Overground, DLR)
+- Unified station search across NR + TfL
+- TfL board UX grouped by line with line status summaries
+- Service route detail views for NR and TfL
+- Configurable caching backend (`memory` or `sqlite`)
+- Cache-busted static assets tied to git commit
 
 ## Screenshots
 
 ### Homepage
 ![Leatherhead Live homepage](docs/images/homepage.png)
 
-### Departures Board
-![Leatherhead Live departures board](docs/images/board-departures.png)
+### TfL Departures Board
+![Leatherhead Live TfL departures board](docs/images/board-departures.png)
 
-### Service Detail
-![Leatherhead Live service detail timeline](docs/images/service-detail.png)
+### TfL Service Detail
+![Leatherhead Live TfL service detail timeline](docs/images/service-detail.png)
 
 ## Project Structure
 
-```
+```text
 LeatherheadLive/
 ├── app/
-│   ├── main.py              # FastAPI application & middleware
-│   ├── config.py            # Configuration management
+│   ├── main.py                    # FastAPI app setup, middleware, health
+│   ├── config.py                  # Settings and env/file key loading
 │   ├── models/
-│   │   └── board.py         # Pydantic data models
-│   ├── services/
-│   │   ├── rail_api.py      # National Rail API client
-│   │   └── tfl_api.py       # TfL API client
+│   │   ├── board.py               # National Rail models
+│   │   ├── tfl.py                 # TfL board/prediction models
+│   │   └── tfl_service.py         # TfL service detail models
 │   ├── routers/
-│   │   └── boards.py        # API endpoints
-│   └── middleware/
-│       └── cache.py         # Caching implementation
-├── board.py                 # Original script (kept for reference)
+│   │   ├── boards.py              # JSON API endpoints
+│   │   ├── pages.py               # HTML routes and HTMX partial routes
+│   │   └── stations.py            # Station autocomplete endpoint
+│   ├── services/
+│   │   ├── rail_api.py            # National Rail API client
+│   │   ├── tfl_api.py             # TfL API client
+│   │   ├── station_search.py      # Unified local station search
+│   │   └── display_mapper.py      # UI mapping/grouping helpers
+│   ├── tools/
+│   │   └── refresh_tfl_stations.py # Manual TfL station index refresh command
+│   ├── middleware/
+│   │   └── cache.py               # Cache backend abstraction
+│   ├── templates/                 # Jinja templates + HTMX partials
+│   └── static/                    # CSS/JS/icons/data
+├── app/static/data/stations.json  # National Rail station index
+├── app/static/data/tfl_stations.json # TfL local station index (generated)
 ├── requirements.txt
 ├── .env.example
 └── README.md
@@ -52,38 +62,37 @@ LeatherheadLive/
 
 - Python 3.10+
 - Virtual environment (recommended)
-- National Rail API key (get from https://www.nationalrail.co.uk/100296.aspx)
-- TfL API key (get from https://api-portal.tfl.gov.uk/)
+- National Rail API key (https://www.nationalrail.co.uk/100296.aspx)
+- TfL API key (https://api-portal.tfl.gov.uk/)
 
 ### Setup
 
-1. **Create and activate virtual environment**:
+1. Create and activate virtual environment:
    ```bash
    python3 -m venv .venv
    source .venv/bin/activate
    ```
 
-2. **Install dependencies**:
+2. Install dependencies:
    ```bash
    pip install -r requirements.txt
    ```
 
-3. **Configure API keys**:
+3. Configure API keys:
    ```bash
    cp .env.example .env
-   # Edit .env and set RAIL_API_KEY and TFL_APP_KEY
+   # Set RAIL_API_KEY and TFL_APP_KEY (or TFL_API_KEY)
    ```
 
-   Alternative file-based keys (same style as National Rail fallback):
+   File-based key fallback is also supported:
    - `key` for National Rail
    - `tfl_key` for TfL
 
-4. **Refresh local TfL station index (recommended before deploys)**:
+4. Refresh local TfL station index (recommended before deploys):
    ```bash
    python -m app.tools.refresh_tfl_stations
    ```
    This writes `app/static/data/tfl_stations.json`, used by `/api/stations/search` for fast local TfL autocomplete.
-   If refresh fails, National Rail search still works and TfL search falls back to no local matches until the file is regenerated.
 
 ## Running the Server
 
@@ -91,249 +100,169 @@ LeatherheadLive/
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-The server will start at: **http://localhost:8000**
+Server: [http://localhost:8000](http://localhost:8000)
 
 ## API Endpoints
 
-### Interactive Documentation
+### Docs
 
-- **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
+- Swagger UI: [http://localhost:8000/docs](http://localhost:8000/docs)
+- ReDoc: [http://localhost:8000/redoc](http://localhost:8000/redoc)
 
-### Available Endpoints
+### National Rail (JSON)
 
-#### 1. Get Full Board
-```http
-GET /api/boards/{crs_code}
-```
+Compatibility routes:
+- `GET /api/boards/{crs_code}` (full board)
+- `GET /api/boards/{crs_code}/departures`
+- `GET /api/boards/{crs_code}/arrivals`
+- `GET /api/boards/{crs_code}/passing`
 
-Returns complete arrival and departure board for a station.
+Provider-prefixed routes:
+- `GET /api/boards/nr/{crs_code}` (full board)
 
-**Example**:
+Cache control:
+- `DELETE /api/boards/{crs_code}/cache`
+- `DELETE /api/boards/cache/all`
+
+Examples:
 ```bash
 curl http://localhost:8000/api/boards/LHD
-```
-
-**Response**:
-```json
-{
-  "success": true,
-  "cached": false,
-  "data": {
-    "location_name": "Leatherhead",
-    "crs": "LHD",
-    "generated_at": "2026-01-31T18:30:00",
-    "trains": [
-      {
-        "scheduled_departure_time": "18:35",
-        "estimated_departure_time": "On time",
-        "destination_name": "London Waterloo",
-        "platform": "2",
-        "operator": "South Western Railway",
-        "display_status": "On time"
-      }
-    ]
-  }
-}
-```
-
-#### 2. Get Departures Only
-```http
-GET /api/boards/{crs_code}/departures
-```
-
-Returns only trains departing from the station.
-
-**Example**:
-```bash
+curl http://localhost:8000/api/boards/nr/LHD
 curl http://localhost:8000/api/boards/LHD/departures
 ```
 
-#### 3. Get Arrivals Only
-```http
-GET /api/boards/{crs_code}/arrivals
-```
+### TfL (JSON)
 
-Returns only trains arriving at the station.
+- `GET /api/boards/tfl/{stop_point_id}` (full board)
+- `GET /api/boards/tfl/{stop_point_id}/departures`
+- `GET /api/boards/tfl/{stop_point_id}/arrivals`
+- `GET /api/boards/tfl/{stop_point_id}/status`
+- `GET /api/boards/tfl/{stop_point_id}/passing` -> returns `404` (unsupported)
 
-**Example**:
+Example:
 ```bash
-curl http://localhost:8000/api/boards/WAT/arrivals
+curl http://localhost:8000/api/boards/tfl/940GZZLUWSM
 ```
 
-#### 4. Get Passing Through
-```http
-GET /api/boards/{crs_code}/passing
-```
+### Health
 
-Returns trains that are both arriving and departing (passing through).
+- `GET /api/health`
 
-**Example**:
-```bash
-curl http://localhost:8000/api/boards/LHD/passing
-```
-
-#### 5. Clear Station Cache
-```http
-DELETE /api/boards/{crs_code}/cache
-```
-
-Clear cached data for a specific station.
-
-**Example**:
-```bash
-curl -X DELETE http://localhost:8000/api/boards/LHD/cache
-```
-
-#### 6. Clear All Cache
-```http
-DELETE /api/boards/cache/all
-```
-
-Clear all cached board data.
-
-**Example**:
-```bash
-curl -X DELETE http://localhost:8000/api/boards/cache/all
-```
-
-#### 7. Health Check
-```http
-GET /api/health
-```
-
-Check API health status.
-
-#### 8. TfL Departures/Arrivals/Status
-```http
-GET /api/boards/tfl/{stop_point_id}/departures
-GET /api/boards/tfl/{stop_point_id}/arrivals
-GET /api/boards/tfl/{stop_point_id}/status
-```
-
-**Example**:
+Example:
 ```bash
 curl http://localhost:8000/api/health
 ```
 
 ### Query Parameters
 
-All board endpoints support the following query parameter:
+Board endpoints support:
+- `use_cache` (`true` by default)
 
-- `use_cache` (boolean, default: true) - Whether to use cached data
-
-**Example**:
+Example:
 ```bash
 curl "http://localhost:8000/api/boards/LHD?use_cache=false"
 ```
 
-## Common UK Station CRS Codes
+## Web Routes
 
-| Station | CRS Code |
-|---------|----------|
-| Leatherhead | LHD |
-| London Waterloo | WAT |
-| London Victoria | VIC |
-| London Paddington | PAD |
-| London King's Cross | KGX |
-| London Liverpool Street | LST |
-| Brighton | BTN |
-| Manchester Piccadilly | MAN |
-| Birmingham New Street | BHM |
-| Edinburgh Waverley | EDB |
+### Board pages
 
-Full list: https://www.nationalrail.co.uk/stations_destinations/48541.aspx
+- `GET /board/nr/{crs}/{view}` where `view` is `departures|arrivals|passing`
+- `GET /board/tfl/{stop_point_id}/{view}` where `view` is `departures|arrivals`
+
+Legacy redirects (NR compatibility):
+- `GET /board/{crs}` -> `/board/nr/{crs}/departures`
+- `GET /board/{crs}/{view}` -> `/board/nr/{crs}/{view}`
+
+HTMX content/refresh routes are also exposed for board tabs and auto-refresh.
+
+### Service detail pages
+
+- NR: `GET /service/{crs}/{service_id}`
+- TfL: `GET /service/tfl/{line_id}/{from_stop_id}/{to_stop_id}`
+
+## Station Search
+
+- Endpoint: `GET /api/stations/search`
+- Returns: HTML fragment (HTMX partial), not JSON
+- Uses local indices:
+  - NR: `app/static/data/stations.json`
+  - TfL: `app/static/data/tfl_stations.json`
+- Unified ranking across providers with provider-aware board URLs
+
+## TfL Scope / Limitations
+
+- Supported modes: `tube`, `overground`, `dlr`
+- TfL `passing` board view is not supported (`404`)
+- TfL service route detail is best-effort from live predictions/route sequence/timetable data
 
 ## Configuration
 
-Configuration can be set via environment variables or the `.env` file:
+Configuration can be set via environment variables or `.env`:
 
 ```env
-# National Rail API Configuration
+# National Rail API
 RAIL_API_KEY=your_api_key_here
 
-# TfL API Configuration
+# TfL API
 TFL_APP_KEY=your_tfl_app_key_here
 TFL_APP_ID=
 TFL_MODES=["tube","overground","dlr"]
 
-# Cache Configuration (default: 60 seconds)
+# Cache
 CACHE_TTL_SECONDS=60
+CACHE_BACKEND=memory
+# CACHE_BACKEND=sqlite
+# CACHE_SQLITE_PATH=/tmp/trains_mattdev_im_cache.sqlite3
 
-# CORS Configuration
+# CORS
 CORS_ORIGINS=["*"]
 
-# Server Configuration
+# App
 APP_NAME="Leatherhead Live Train Board API"
 DEBUG=false
 ```
 
 ## Caching Strategy
 
-The API implements intelligent caching to reduce load on the National Rail API:
-
-- **TTL**: 60 seconds (configurable)
-- **Per-Station**: Each station's data is cached independently
-- **Automatic Cleanup**: Expired entries are automatically removed
-- **Manual Control**: Clear cache via API endpoints when needed
+- Default TTL: `60` seconds
+- Backend: configurable (`memory` or `sqlite`)
+- Cached domains: National Rail boards, TfL board/status/search snapshots, and derived board page data paths
+- Manual invalidation endpoints exist for NR board cache routes
 
 ## Error Handling
 
-The API returns appropriate HTTP status codes:
-
-- `200 OK`: Successful request
-- `404 Not Found`: Invalid CRS code or no data available
-- `500 Internal Server Error`: API or server error
-
-**Example Error Response**:
-```json
-{
-  "success": false,
-  "error": "Could not fetch board data for station 'XXX'",
-  "detail": "Please check the CRS code is valid."
-}
-```
+Common status behavior:
+- `200 OK`: success
+- `404 Not Found`: invalid code/id, unavailable resource, or unsupported TfL passing view
+- `5xx`: upstream/provider or internal server issues
 
 ## Development
 
-### Running Tests
+### Run tests
+
 ```bash
 pytest
 ```
 
-### Code Structure
+### Core modules
 
-- **Models** (`app/models/board.py`): Pydantic models for data validation
-- **Services** (`app/services/rail_api.py`): Business logic & external API calls
-- **Routers** (`app/routers/boards.py`): API endpoint definitions
-- **Middleware** (`app/middleware/cache.py`): Caching implementation
-- **Config** (`app/config.py`): Settings management
-
-## Performance
-
-- **Async/Await**: Non-blocking I/O for high concurrency
-- **In-Memory Cache**: Sub-millisecond cache hits
-- **HTTP/2 Support**: Via httpx client
-- **Connection Pooling**: Reusable HTTP connections
+- Models: `app/models/`
+- Services: `app/services/`
+- Routers: `app/routers/`
+- Templates: `app/templates/`
+- Config: `app/config.py`
 
 ## License
 
-GNU Affero General Public License v3.0 (AGPL-3.0). See [`LICENSE`](LICENSE).
+GNU Affero General Public License v3.0 (AGPL-3.0). See [LICENSE](LICENSE).
 
 ## Credits
 
 Built with:
-- [FastAPI](https://fastapi.tiangolo.com/) - Modern web framework
-- [Pydantic](https://pydantic-docs.helpmanual.io/) - Data validation
-- [HTTPX](https://www.python-httpx.org/) - Async HTTP client
-- [Uvicorn](https://www.uvicorn.org/) - ASGI server
-- National Rail API - Live train data
-#### 1b. Get Full Board (Provider-Prefixed National Rail)
-```http
-GET /api/boards/nr/{crs_code}
-```
-
-#### 1c. Get Full TfL Board
-```http
-GET /api/boards/tfl/{stop_point_id}
-```
+- [FastAPI](https://fastapi.tiangolo.com/)
+- [Pydantic](https://pydantic-docs.helpmanual.io/)
+- [HTTPX](https://www.python-httpx.org/)
+- [Uvicorn](https://www.uvicorn.org/)
+- National Rail API
+- TfL Unified API

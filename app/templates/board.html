@@ -7,7 +7,8 @@
         <div class="header">
             <h1>{{ station_name }}</h1>
             <p class="station-name">
-                {{ crs }} • {{ total_trains }} service{{ 's' if total_trains != 1 else '' }} • Next 2 hours •
+                {{ crs }} • {{ total_trains }} service{{ 's' if total_trains != 1 else '' }} •
+                {% if provider == 'tfl' %}Live predictions{% else %}Next 2 hours{% endif %} •
                 {% if provider == 'tfl' %}TfL{% else %}National Rail{% endif %}
             </p>
         </div>
