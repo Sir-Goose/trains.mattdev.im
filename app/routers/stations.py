@@ -4,6 +4,7 @@ Station search API endpoints
 from fastapi import APIRouter, Request, Query
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from app.services.prefetch import prefetch_service
 from app.services.station_search import search_stations_unified
 
 router = APIRouter(prefix="/api/stations", tags=["stations"])
@@ -33,6 +34,15 @@ async def search(
     
     # Perform unified search across National Rail and TfL
     results = await search_stations_unified(q, view=view, limit=10)
+
+    # Warm linked board caches so search-click navigation is faster.
+    for result in results:
+        provider = (result.get("provider") or "").strip().lower()
+        code = (result.get("code") or "").strip()
+        if provider == "nr":
+            prefetch_service.schedule_nr_board_prefetch(code)
+        elif provider == "tfl":
+            prefetch_service.schedule_tfl_board_prefetch(code)
     
     # No results = show empty state message
     if not results:

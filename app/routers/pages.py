@@ -14,6 +14,10 @@ from app.utils.time import current_time_hms, format_updated_at
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
+COMMON_HOMEPAGE_NR_CRS = [
+    "LHD", "WIM", "EPS", "WAT", "VIC", "PAD", "KGX", "LST", "EUS", "STP", "CHX", "CST", "LBG", "MYB"
+]
+COMMON_HOMEPAGE_TFL_STOPS = ["940GZZLUWSM"]
 
 
 def validate_crs(crs: str) -> str:
@@ -139,6 +143,13 @@ async def get_tfl_board_data(stop_point_id: str, view: str):
         raise HTTPException(status_code=500, detail="Service temporarily unavailable")
 
 
+def schedule_homepage_board_prefetches() -> None:
+    for crs in COMMON_HOMEPAGE_NR_CRS:
+        prefetch_service.schedule_nr_board_prefetch(crs)
+    for stop_id in COMMON_HOMEPAGE_TFL_STOPS:
+        prefetch_service.schedule_tfl_board_prefetch(stop_id)
+
+
 def schedule_nr_board_prefetch(crs: str, board: dict) -> None:
     if board.get("from_cache", True):
         return
@@ -179,8 +190,34 @@ def schedule_tfl_board_prefetch(board: dict) -> None:
         )
 
 
+def schedule_nr_service_boards_prefetch(service) -> None:
+    seen: set[str] = set()
+
+    def add(crs: Optional[str]) -> None:
+        normalized = (crs or "").strip().upper()
+        if len(normalized) == 3 and normalized.isalpha() and normalized not in seen:
+            seen.add(normalized)
+            prefetch_service.schedule_nr_board_prefetch(normalized)
+
+    add(getattr(service, "crs", None))
+    for stop in getattr(service, "all_previous_stops", []) or []:
+        add(getattr(stop, "crs", None))
+    for stop in getattr(service, "all_subsequent_stops", []) or []:
+        add(getattr(stop, "crs", None))
+
+
+def schedule_tfl_service_boards_prefetch(service) -> None:
+    seen: set[str] = set()
+    for stop in getattr(service, "stops", []) or []:
+        stop_id = (getattr(stop, "stop_id", None) or "").strip()
+        if stop_id and stop_id not in seen:
+            seen.add(stop_id)
+            prefetch_service.schedule_tfl_board_prefetch(stop_id)
+
+
 @router.get("/", response_class=HTMLResponse)
 async def index(request: Request):
+    schedule_homepage_board_prefetches()
     return templates.TemplateResponse("index.html", {"request": request, "timestamp": current_time_hms()})
 
 
@@ -204,6 +241,8 @@ async def service_detail_page(request: Request, crs: str, service_id: str):
             status_code=404,
         )
 
+    schedule_nr_service_boards_prefetch(service)
+
     return templates.TemplateResponse(
         "service_detail.html",
         {"request": request, "service": service, "timestamp": format_updated_at(service.pulledAt or service.generatedAt)},
@@ -217,6 +256,8 @@ async def service_detail_refresh(request: Request, crs: str, service_id: str):
 
     if not service:
         return HTMLResponse(content="<div class='error-message'>Service no longer available</div>", status_code=200)
+
+    schedule_nr_service_boards_prefetch(service)
 
     return templates.TemplateResponse(
         "partials/service_timeline.html",
@@ -264,6 +305,8 @@ async def tfl_service_detail_page(
             },
             status_code=404,
         )
+
+    schedule_tfl_service_boards_prefetch(service)
 
     refresh_url = f"/service/tfl/{line_id}/{from_stop_id}/{to_stop_id}/refresh"
     if request.url.query:
@@ -315,6 +358,8 @@ async def tfl_service_detail_refresh(
             content="<div class='error-message'>Route no longer available</div>",
             status_code=200,
         )
+
+    schedule_tfl_service_boards_prefetch(service)
 
     return templates.TemplateResponse(
         "partials/tfl_service_timeline.html",

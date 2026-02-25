@@ -348,3 +348,60 @@ def test_tfl_board_refresh_prefetch_runs_for_fresh_board(monkeypatch):
 
     assert response.status_code == 200
     assert len(calls) == 1
+
+
+def test_homepage_prefetches_common_boards(monkeypatch):
+    nr_calls: list[str] = []
+    tfl_calls: list[str] = []
+
+    def fake_schedule_nr_board_prefetch(crs: str):
+        nr_calls.append(crs)
+
+    def fake_schedule_tfl_board_prefetch(stop_point_id: str):
+        tfl_calls.append(stop_point_id)
+
+    monkeypatch.setattr('app.routers.pages.prefetch_service.schedule_nr_board_prefetch', fake_schedule_nr_board_prefetch)
+    monkeypatch.setattr('app.routers.pages.prefetch_service.schedule_tfl_board_prefetch', fake_schedule_tfl_board_prefetch)
+
+    client = TestClient(app)
+    response = client.get('/')
+
+    assert response.status_code == 200
+    assert "LHD" in nr_calls
+    assert "940GZZLUWSM" in tfl_calls
+
+
+def test_tfl_service_page_prefetches_clickable_boards(monkeypatch):
+    detail = TflServiceDetail(
+        line_id="victoria",
+        line_name="Victoria",
+        direction="northbound",
+        from_stop_id="940GZZLUBXN",
+        to_stop_id="940GZZLUGPK",
+        origin_name="Brixton Underground Station",
+        destination_name="Green Park Underground Station",
+        resolution_mode="exact",
+        mode_name="tube",
+        stops=[
+            TflServiceStop(stop_id="940GZZLUBXN", stop_name="Brixton Underground Station"),
+            TflServiceStop(stop_id="940GZZLUSTK", stop_name="Stockwell Underground Station"),
+            TflServiceStop(stop_id="940GZZLUGPK", stop_name="Green Park Underground Station"),
+        ],
+    )
+
+    async def fake_get_service_route_detail_cached(**kwargs):
+        return detail
+
+    calls: list[str] = []
+
+    def fake_schedule_tfl_board_prefetch(stop_point_id: str):
+        calls.append(stop_point_id)
+
+    monkeypatch.setattr('app.routers.pages.tfl_api_service.get_service_route_detail_cached', fake_get_service_route_detail_cached)
+    monkeypatch.setattr('app.routers.pages.prefetch_service.schedule_tfl_board_prefetch', fake_schedule_tfl_board_prefetch)
+
+    client = TestClient(app)
+    response = client.get('/service/tfl/victoria/940GZZLUBXN/940GZZLUGPK?direction=northbound')
+
+    assert response.status_code == 200
+    assert set(calls) == {"940GZZLUBXN", "940GZZLUSTK", "940GZZLUGPK"}

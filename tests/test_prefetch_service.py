@@ -108,3 +108,27 @@ async def test_prefetch_respects_global_concurrency_limit(monkeypatch):
         settings.prefetch_enabled = old_enabled
 
     assert max_running == 1
+
+
+@pytest.mark.asyncio
+async def test_nr_board_prefetch_warms_board_cache(monkeypatch):
+    old_enabled = settings.prefetch_enabled
+    settings.prefetch_enabled = True
+    coordinator = PrefetchCoordinator()
+
+    calls: list[str] = []
+
+    async def fake_get_board(crs_code: str, use_cache: bool = True):
+        calls.append(crs_code)
+        await asyncio.sleep(0.01)
+        return None
+
+    monkeypatch.setattr("app.services.prefetch.rail_api_service.get_board", fake_get_board)
+
+    try:
+        coordinator.schedule_nr_board_prefetch("LHD")
+        await asyncio.sleep(0.05)
+    finally:
+        settings.prefetch_enabled = old_enabled
+
+    assert calls == ["LHD"]

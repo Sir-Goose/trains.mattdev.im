@@ -53,6 +53,38 @@ class PrefetchCoordinator:
 
         asyncio.create_task(self._run_job(job_key, _runner))
 
+    def schedule_nr_board_prefetch(self, crs: str) -> None:
+        if not settings.prefetch_enabled:
+            return
+
+        normalized_crs = (crs or "").strip().upper()
+        if len(normalized_crs) != 3 or not normalized_crs.isalpha():
+            return
+
+        job_key = f"nr-board:{normalized_crs}"
+        self._emit(f"queued {job_key}")
+
+        async def _runner() -> None:
+            await rail_api_service.get_board(crs_code=normalized_crs, use_cache=True)
+
+        asyncio.create_task(self._run_job(job_key, _runner))
+
+    def schedule_tfl_board_prefetch(self, stop_point_id: str) -> None:
+        if not settings.prefetch_enabled:
+            return
+
+        normalized_stop_id = (stop_point_id or "").strip()
+        if not normalized_stop_id:
+            return
+
+        job_key = f"tfl-board:{normalized_stop_id.lower()}"
+        self._emit(f"queued {job_key}")
+
+        async def _runner() -> None:
+            await tfl_api_service.get_board(stop_point_id=normalized_stop_id, use_cache=True)
+
+        asyncio.create_task(self._run_job(job_key, _runner))
+
     def schedule_tfl_service_prefetch(self, params: dict[str, Any]) -> None:
         if not settings.prefetch_enabled:
             return
