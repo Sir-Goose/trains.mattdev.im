@@ -1,4 +1,6 @@
+from app.middleware.cache import cache
 from app.models.tfl import TflPrediction
+from app.models.tfl_service import TflServiceDetail
 from app.services.tfl_api import TflAPIError, TflAPIService
 import pytest
 
@@ -273,3 +275,76 @@ async def test_search_stop_points_formats_dlr_station_name_and_badge(monkeypatch
     assert results
     assert results[0]["name"] == "Bow Church DLR Station"
     assert results[0]["badge"] == "TfL DLR"
+
+
+def test_service_detail_cache_key_includes_discriminators():
+    service = TflAPIService()
+    key_one = service._service_detail_cache_key(
+        line_id="victoria",
+        from_stop_id="940GZZLUGPK",
+        to_stop_id="940GZZLUBXN",
+        direction="inbound",
+        trip_id="trip-1",
+        vehicle_id="veh-1",
+        expected_arrival="2026-01-01T12:00:00+00:00",
+    )
+    key_two = service._service_detail_cache_key(
+        line_id="victoria",
+        from_stop_id="940GZZLUGPK",
+        to_stop_id="940GZZLUBXN",
+        direction="inbound",
+        trip_id="trip-2",
+        vehicle_id="veh-1",
+        expected_arrival="2026-01-01T12:00:00+00:00",
+    )
+
+    assert key_one != key_two
+
+
+@pytest.mark.asyncio
+async def test_get_service_route_detail_cached_reuses_cached_value(monkeypatch):
+    cache.clear()
+    service = TflAPIService()
+
+    detail = TflServiceDetail(
+        line_id="victoria",
+        line_name="Victoria",
+        direction="inbound",
+        from_stop_id="940GZZLUGPK",
+        to_stop_id="940GZZLUBXN",
+        origin_name="Green Park Underground Station",
+        destination_name="Brixton Underground Station",
+        resolution_mode="exact",
+        mode_name="tube",
+        stops=[],
+    )
+
+    calls = 0
+
+    async def fake_get_service_route_detail(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        return detail
+
+    monkeypatch.setattr(service, "get_service_route_detail", fake_get_service_route_detail)
+
+    first = await service.get_service_route_detail_cached(
+        line_id="victoria",
+        from_stop_id="940GZZLUGPK",
+        to_stop_id="940GZZLUBXN",
+        direction="inbound",
+        trip_id="trip-1",
+        use_cache=True,
+    )
+    second = await service.get_service_route_detail_cached(
+        line_id="victoria",
+        from_stop_id="940GZZLUGPK",
+        to_stop_id="940GZZLUBXN",
+        direction="inbound",
+        trip_id="trip-1",
+        use_cache=True,
+    )
+
+    assert first.line_id == "victoria"
+    assert second.line_id == "victoria"
+    assert calls == 1

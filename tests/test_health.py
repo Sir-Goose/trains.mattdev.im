@@ -12,3 +12,4 @@ def test_health_endpoint_returns_expected_shape():
     assert payload['status'] == 'healthy'
     assert 'cache_ttl' in payload
     assert 'cache_backend' in payload
+    assert payload['cache_backend'] == 'sqlite'

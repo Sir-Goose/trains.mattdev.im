@@ -20,8 +20,14 @@ class Settings(BaseSettings):
     
     # Cache Configuration
     cache_ttl_seconds: int = 60
-    cache_backend: str = "memory"  # "memory" or "sqlite"
+    cache_backend: str = "sqlite"
     cache_sqlite_path: str = "/tmp/trains_mattdev_im_cache.sqlite3"
+
+    # Server-side prefetch configuration
+    prefetch_enabled: bool = True
+    prefetch_max_concurrency: int = 4
+    service_prefetch_ttl_seconds: int = 60
+    prefetch_request_timeout_seconds: int = 10
     
     # CORS Configuration
     cors_origins: list[str] = ["*"]

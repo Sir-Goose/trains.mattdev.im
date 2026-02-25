@@ -102,6 +102,9 @@ class RailAPIService:
         # services across many stations in one journey.
         return max(self.cache_ttl * 6, 3600)
 
+    def _service_detail_cache_key(self, service_id: str) -> str:
+        return f"nr:service_detail:{service_id}"
+
     def _build_service_crs_candidates(self, service: ServiceDetails) -> list[str]:
         candidates: list[str] = []
         seen: set[str] = set()
@@ -417,6 +420,36 @@ class RailAPIService:
                 return service
 
         return None
+
+    async def get_service_route_following_cached(
+        self,
+        crs_code: str,
+        service_id: str,
+        use_cache: bool = True,
+        max_stations_to_check: int = 10,
+    ) -> Optional[ServiceDetails]:
+        cache_key = self._service_detail_cache_key(service_id)
+        if use_cache:
+            cached = cache.get(cache_key)
+            if isinstance(cached, dict):
+                try:
+                    return ServiceDetails(**cached)
+                except Exception:
+                    pass
+
+        service = await self.get_service_route_following(
+            crs_code=crs_code,
+            service_id=service_id,
+            use_cache=use_cache,
+            max_stations_to_check=max_stations_to_check,
+        )
+        if service:
+            cache.set(
+                cache_key,
+                service.model_dump(mode="json", by_alias=True),
+                settings.service_prefetch_ttl_seconds,
+            )
+        return service
     
     def _parse_board(self, data: dict) -> Board:
         """Parse API response into Board model."""

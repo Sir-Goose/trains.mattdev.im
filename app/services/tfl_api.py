@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import json
 import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
@@ -124,6 +126,40 @@ class TflAPIService:
 
     def _stop_name_cache_key(self, stop_id: str) -> str:
         return f"tfl:stop_name:{stop_id.lower()}"
+
+    @staticmethod
+    def _normalize_detail_cache_string(value: Optional[str], lowercase: bool = False) -> str:
+        normalized = (value or "").strip()
+        if lowercase:
+            normalized = normalized.lower()
+        return normalized
+
+    def _service_detail_cache_key(
+        self,
+        line_id: str,
+        from_stop_id: str,
+        to_stop_id: str,
+        direction: Optional[str] = None,
+        trip_id: Optional[str] = None,
+        vehicle_id: Optional[str] = None,
+        expected_arrival: Optional[str] = None,
+        station_name: Optional[str] = None,
+        destination_name: Optional[str] = None,
+    ) -> str:
+        payload = {
+            "line_id": self._normalize_detail_cache_string(line_id, lowercase=True),
+            "from_stop_id": self._normalize_detail_cache_string(from_stop_id, lowercase=True),
+            "to_stop_id": self._normalize_detail_cache_string(to_stop_id, lowercase=True),
+            "direction": self._normalize_detail_cache_string(direction, lowercase=True),
+            "trip_id": self._normalize_detail_cache_string(trip_id),
+            "vehicle_id": self._normalize_detail_cache_string(vehicle_id),
+            "expected_arrival": self._normalize_detail_cache_string(expected_arrival),
+            "station_name": self._normalize_detail_cache_string(station_name),
+            "destination_name": self._normalize_detail_cache_string(destination_name),
+        }
+        payload_json = json.dumps(payload, separators=(",", ":"), sort_keys=True)
+        digest = hashlib.sha256(payload_json.encode("utf-8")).hexdigest()
+        return f"tfl:service_detail:{digest}"
 
     @staticmethod
     def _prediction_sort_key(prediction: TflPrediction):
@@ -706,6 +742,57 @@ class TflAPIService:
             pulledAt=self._current_timestamp_iso(),
             stops=stops,
         )
+
+    async def get_service_route_detail_cached(
+        self,
+        line_id: str,
+        from_stop_id: str,
+        to_stop_id: str,
+        direction: Optional[str] = None,
+        trip_id: Optional[str] = None,
+        vehicle_id: Optional[str] = None,
+        expected_arrival: Optional[str] = None,
+        station_name: Optional[str] = None,
+        destination_name: Optional[str] = None,
+        use_cache: bool = True,
+    ) -> TflServiceDetail:
+        cache_key = self._service_detail_cache_key(
+            line_id=line_id,
+            from_stop_id=from_stop_id,
+            to_stop_id=to_stop_id,
+            direction=direction,
+            trip_id=trip_id,
+            vehicle_id=vehicle_id,
+            expected_arrival=expected_arrival,
+            station_name=station_name,
+            destination_name=destination_name,
+        )
+        if use_cache:
+            cached = cache.get(cache_key)
+            if isinstance(cached, dict):
+                try:
+                    return TflServiceDetail(**cached)
+                except Exception:
+                    pass
+
+        service = await self.get_service_route_detail(
+            line_id=line_id,
+            from_stop_id=from_stop_id,
+            to_stop_id=to_stop_id,
+            direction=direction,
+            trip_id=trip_id,
+            vehicle_id=vehicle_id,
+            expected_arrival=expected_arrival,
+            station_name=station_name,
+            destination_name=destination_name,
+            use_cache=use_cache,
+        )
+        cache.set(
+            cache_key,
+            service.model_dump(mode="json", by_alias=True),
+            settings.service_prefetch_ttl_seconds,
+        )
+        return service
 
     def _build_board(
         self,

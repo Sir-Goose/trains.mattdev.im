@@ -192,7 +192,7 @@ def test_tfl_service_detail_page_renders_timeline(monkeypatch):
     async def fake_get_service_route_detail(**kwargs):
         return detail
 
-    monkeypatch.setattr('app.routers.pages.tfl_api_service.get_service_route_detail', fake_get_service_route_detail)
+    monkeypatch.setattr('app.routers.pages.tfl_api_service.get_service_route_detail_cached', fake_get_service_route_detail)
 
     client = TestClient(app)
     response = client.get('/service/tfl/victoria/940GZZLUBXN/940GZZLUGPK?direction=northbound')
@@ -201,3 +201,150 @@ def test_tfl_service_detail_page_renders_timeline(monkeypatch):
     assert 'Brixton Underground Station' in response.text
     assert 'Green Park Underground Station' in response.text
     assert 'Exact match' in response.text
+
+
+def test_tfl_board_prefetch_runs_for_fresh_board(monkeypatch):
+    async def fake_get_tfl_board_data(stop_point_id: str, view: str):
+        return {
+            "trains": [
+                {
+                    "line_id": "victoria",
+                    "from_stop_id": "940GZZLUGPK",
+                    "to_stop_id": "940GZZLUBXN",
+                    "direction": "outbound",
+                    "trip_id": "trip-1",
+                    "vehicle_id": "veh-1",
+                    "expected_arrival": "2026-01-01T12:00:00+00:00",
+                    "origin_name": "Green Park Underground Station",
+                    "destination_name": "Brixton Underground Station",
+                    "service_url": "/service/tfl/victoria/940GZZLUGPK/940GZZLUBXN",
+                }
+            ],
+            "line_groups": [],
+            "total_trains": 1,
+            "station_name": "Green Park Underground Station",
+            "error": False,
+            "timestamp": "12:00:00",
+            "line_status": [],
+            "from_cache": False,
+        }
+
+    calls: list[dict] = []
+
+    def fake_schedule_tfl_service_prefetch(params: dict):
+        calls.append(params)
+
+    monkeypatch.setattr('app.routers.pages.get_tfl_board_data', fake_get_tfl_board_data)
+    monkeypatch.setattr('app.routers.pages.prefetch_service.schedule_tfl_service_prefetch', fake_schedule_tfl_service_prefetch)
+
+    client = TestClient(app)
+    response = client.get('/board/tfl/940GZZLUGPK/departures')
+
+    assert response.status_code == 200
+    assert len(calls) == 1
+    assert calls[0]["line_id"] == "victoria"
+
+
+def test_tfl_board_prefetch_skips_when_board_from_cache(monkeypatch):
+    async def fake_get_tfl_board_data(stop_point_id: str, view: str):
+        return {
+            "trains": [
+                {
+                    "line_id": "victoria",
+                    "from_stop_id": "940GZZLUGPK",
+                    "to_stop_id": "940GZZLUBXN",
+                    "service_url": "/service/tfl/victoria/940GZZLUGPK/940GZZLUBXN",
+                }
+            ],
+            "line_groups": [],
+            "total_trains": 1,
+            "station_name": "Green Park Underground Station",
+            "error": False,
+            "timestamp": "12:00:00",
+            "line_status": [],
+            "from_cache": True,
+        }
+
+    calls: list[dict] = []
+
+    def fake_schedule_tfl_service_prefetch(params: dict):
+        calls.append(params)
+
+    monkeypatch.setattr('app.routers.pages.get_tfl_board_data', fake_get_tfl_board_data)
+    monkeypatch.setattr('app.routers.pages.prefetch_service.schedule_tfl_service_prefetch', fake_schedule_tfl_service_prefetch)
+
+    client = TestClient(app)
+    response = client.get('/board/tfl/940GZZLUGPK/departures')
+
+    assert response.status_code == 200
+    assert calls == []
+
+
+def test_tfl_board_content_prefetch_runs_for_fresh_board(monkeypatch):
+    async def fake_get_tfl_board_data(stop_point_id: str, view: str):
+        return {
+            "trains": [
+                {
+                    "line_id": "victoria",
+                    "from_stop_id": "940GZZLUGPK",
+                    "to_stop_id": "940GZZLUBXN",
+                    "service_url": "/service/tfl/victoria/940GZZLUGPK/940GZZLUBXN",
+                }
+            ],
+            "line_groups": [],
+            "total_trains": 1,
+            "station_name": "Green Park Underground Station",
+            "error": False,
+            "timestamp": "12:00:00",
+            "line_status": [],
+            "from_cache": False,
+        }
+
+    calls: list[dict] = []
+
+    def fake_schedule_tfl_service_prefetch(params: dict):
+        calls.append(params)
+
+    monkeypatch.setattr('app.routers.pages.get_tfl_board_data', fake_get_tfl_board_data)
+    monkeypatch.setattr('app.routers.pages.prefetch_service.schedule_tfl_service_prefetch', fake_schedule_tfl_service_prefetch)
+
+    client = TestClient(app)
+    response = client.get('/board/tfl/940GZZLUGPK/departures/content')
+
+    assert response.status_code == 200
+    assert len(calls) == 1
+
+
+def test_tfl_board_refresh_prefetch_runs_for_fresh_board(monkeypatch):
+    async def fake_get_tfl_board_data(stop_point_id: str, view: str):
+        return {
+            "trains": [
+                {
+                    "line_id": "victoria",
+                    "from_stop_id": "940GZZLUGPK",
+                    "to_stop_id": "940GZZLUBXN",
+                    "service_url": "/service/tfl/victoria/940GZZLUGPK/940GZZLUBXN",
+                }
+            ],
+            "line_groups": [],
+            "total_trains": 1,
+            "station_name": "Green Park Underground Station",
+            "error": False,
+            "timestamp": "12:00:00",
+            "line_status": [],
+            "from_cache": False,
+        }
+
+    calls: list[dict] = []
+
+    def fake_schedule_tfl_service_prefetch(params: dict):
+        calls.append(params)
+
+    monkeypatch.setattr('app.routers.pages.get_tfl_board_data', fake_get_tfl_board_data)
+    monkeypatch.setattr('app.routers.pages.prefetch_service.schedule_tfl_service_prefetch', fake_schedule_tfl_service_prefetch)
+
+    client = TestClient(app)
+    response = client.get('/board/tfl/940GZZLUGPK/departures/refresh')
+
+    assert response.status_code == 200
+    assert len(calls) == 1

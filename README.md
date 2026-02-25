@@ -9,7 +9,8 @@ A FastAPI-powered web app for UK National Rail and TfL (Tube/Overground/DLR) liv
 - Unified station search across NR + TfL
 - TfL board UX grouped by line with line status summaries
 - Service route detail views for NR and TfL
-- Configurable caching backend (`memory` or `sqlite`)
+- Server-side service prefetch triggered by board loads and auto-refresh
+- SQLite-backed shared cache (single backend)
 - Cache-busted static assets tied to git commit
 
 ## Screenshots
@@ -42,6 +43,7 @@ trains.mattdev.im/
 │   │   ├── rail_api.py            # National Rail API client
 │   │   ├── tfl_api.py             # TfL API client
 │   │   ├── station_search.py      # Unified local station search
+│   │   ├── prefetch.py            # Background service prefetch coordinator
 │   │   └── display_mapper.py      # UI mapping/grouping helpers
 │   ├── tools/
 │   │   └── refresh_tfl_stations.py # Manual TfL station index refresh command
@@ -211,24 +213,40 @@ TFL_MODES=["tube","overground","dlr"]
 
 # Cache
 CACHE_TTL_SECONDS=60
-CACHE_BACKEND=memory
-# CACHE_BACKEND=sqlite
-# CACHE_SQLITE_PATH=/tmp/trains_mattdev_im_cache.sqlite3
+CACHE_BACKEND=sqlite
+CACHE_SQLITE_PATH=/tmp/trains_mattdev_im_cache.sqlite3
+
+# Prefetch
+PREFETCH_ENABLED=true
+PREFETCH_MAX_CONCURRENCY=4
+SERVICE_PREFETCH_TTL_SECONDS=60
+PREFETCH_REQUEST_TIMEOUT_SECONDS=10
 
 # CORS
 CORS_ORIGINS=["*"]
 
 # App
-APP_NAME="Leatherhead Live Train Board API"
+APP_NAME="trains.mattdev.im Train Board API"
 DEBUG=false
 ```
 
 ## Caching Strategy
 
 - Default TTL: `60` seconds
-- Backend: configurable (`memory` or `sqlite`)
-- Cached domains: National Rail boards, TfL board/status/search snapshots, and derived board page data paths
+- Backend: SQLite only (shared across workers/users)
+- Cached domains: National Rail boards, TfL board/status/search snapshots, and service-detail payloads
 - Manual invalidation endpoints exist for NR board cache routes
+
+## Prefetch Strategy
+
+- Board routes schedule background prefetch for all clickable service links when board data is freshly fetched upstream (cache miss)
+- Board auto-refresh routes (`.../refresh`, every 60s in UI) use the same prefetch behavior
+- Prefetch is server-side only; no client payload increase and no client-side prefetching
+- Prefetch worker limits:
+  - global concurrency cap (`PREFETCH_MAX_CONCURRENCY`, default `4`)
+  - per-job timeout (`PREFETCH_REQUEST_TIMEOUT_SECONDS`, default `10`)
+  - in-process active-job dedupe
+- Assembled service detail cache TTL is `SERVICE_PREFETCH_TTL_SECONDS` (default `60`)
 
 ## Error Handling
 

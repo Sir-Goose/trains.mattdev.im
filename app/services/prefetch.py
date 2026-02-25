@@ -1,0 +1,106 @@
+from __future__ import annotations
+
+import asyncio
+import logging
+from typing import Any
+
+from app.config import settings
+from app.services.rail_api import rail_api_service
+from app.services.tfl_api import TflAPIError, TflBoardNotFoundError, tfl_api_service
+
+logger = logging.getLogger(__name__)
+
+
+class PrefetchCoordinator:
+    """Background prefetch scheduler with bounded concurrency and in-process dedupe."""
+
+    def __init__(self) -> None:
+        self._semaphore = asyncio.Semaphore(settings.prefetch_max_concurrency)
+        self._active_job_keys: set[str] = set()
+        self._active_lock = asyncio.Lock()
+
+    async def _claim_job(self, job_key: str) -> bool:
+        async with self._active_lock:
+            if job_key in self._active_job_keys:
+                return False
+            self._active_job_keys.add(job_key)
+            return True
+
+    async def _release_job(self, job_key: str) -> None:
+        async with self._active_lock:
+            self._active_job_keys.discard(job_key)
+
+    def schedule_nr_service_prefetch(self, crs: str, service_id: str) -> None:
+        if not settings.prefetch_enabled or not service_id:
+            return
+
+        job_key = f"nr:{crs.upper()}:{service_id}"
+
+        async def _runner() -> None:
+            await rail_api_service.get_service_route_following_cached(
+                crs_code=crs,
+                service_id=service_id,
+                use_cache=True,
+            )
+
+        asyncio.create_task(self._run_job(job_key, _runner))
+
+    def schedule_tfl_service_prefetch(self, params: dict[str, Any]) -> None:
+        if not settings.prefetch_enabled:
+            return
+
+        line_id = (params.get("line_id") or "").strip().lower()
+        from_stop_id = (params.get("from_stop_id") or "").strip()
+        to_stop_id = (params.get("to_stop_id") or "").strip()
+        if not line_id or not from_stop_id or not to_stop_id:
+            return
+
+        trip_id = (params.get("trip_id") or "").strip()
+        vehicle_id = (params.get("vehicle_id") or "").strip()
+        direction = (params.get("direction") or "").strip().lower()
+        expected_arrival = (params.get("expected_arrival") or "").strip()
+
+        job_key = (
+            f"tfl:{line_id}:{from_stop_id.lower()}:{to_stop_id.lower()}:"
+            f"{direction}:{trip_id}:{vehicle_id}:{expected_arrival}"
+        )
+
+        async def _runner() -> None:
+            await tfl_api_service.get_service_route_detail_cached(
+                line_id=line_id,
+                from_stop_id=from_stop_id,
+                to_stop_id=to_stop_id,
+                direction=params.get("direction"),
+                trip_id=params.get("trip_id"),
+                vehicle_id=params.get("vehicle_id"),
+                expected_arrival=params.get("expected_arrival"),
+                station_name=params.get("station_name"),
+                destination_name=params.get("destination_name"),
+                use_cache=True,
+            )
+
+        asyncio.create_task(self._run_job(job_key, _runner))
+
+    async def _run_job(self, job_key: str, coroutine_factory) -> None:
+        claimed = await self._claim_job(job_key)
+        if not claimed:
+            return
+
+        try:
+            async with self._semaphore:
+                try:
+                    await asyncio.wait_for(
+                        coroutine_factory(),
+                        timeout=settings.prefetch_request_timeout_seconds,
+                    )
+                except (TflBoardNotFoundError, TflAPIError):
+                    logger.debug("Prefetch failed for job %s due to TfL upstream miss/error", job_key)
+                except TimeoutError:
+                    logger.debug("Prefetch job timed out: %s", job_key)
+                except Exception:
+                    logger.exception("Unhandled prefetch error for job %s", job_key)
+        finally:
+            await self._release_job(job_key)
+
+
+prefetch_service = PrefetchCoordinator()

@@ -122,6 +122,7 @@ def map_nr_trains(crs: str, trains: Iterable[Train]) -> list[dict]:
                 "platform": train.platform,
                 "operator": train.operator,
                 "line_name": None,
+                "service_id": train.service_id,
                 "service_url": service_url,
                 "route_unavailable": not bool(service_url),
             }
@@ -178,6 +179,7 @@ def map_tfl_predictions(predictions: Iterable[TflPrediction]) -> list[dict]:
                 "direction": prediction.direction,
                 "trip_id": prediction.trip_id,
                 "vehicle_id": prediction.vehicle_id,
+                "station_name": prediction.station_name,
                 "service_url": service_url,
                 "route_unavailable": not bool(service_url),
             }

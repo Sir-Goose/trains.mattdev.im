@@ -1,5 +1,4 @@
 import json
-import os
 import sqlite3
 import time
 from dataclasses import dataclass
@@ -177,15 +176,14 @@ class SQLiteCache:
 
 
 def _build_cache_backend() -> Any:
-    backend = settings.cache_backend.strip().lower()
-    if backend == "sqlite":
-        return SQLiteCache(
-            db_path=settings.cache_sqlite_path,
-            default_ttl=settings.cache_ttl_seconds,
-        )
-    return SimpleCache(default_ttl=settings.cache_ttl_seconds)
+    # Force SQLite as the single cache backend so caches are shared
+    # across workers and users.
+    settings.cache_backend = "sqlite"
+    return SQLiteCache(
+        db_path=settings.cache_sqlite_path,
+        default_ttl=settings.cache_ttl_seconds,
+    )
 
 
 # Global cache instance
 cache = _build_cache_backend()
-
