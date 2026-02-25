@@ -1,4 +1,4 @@
-# Leatherhead Live - Train Board Web App
+# trains.mattdev.im - Train Board Web App
 
 A FastAPI-powered web app for UK National Rail and TfL (Tube/Overground/DLR) live departure and arrival boards, with JSON API routes supporting the UI.
 
@@ -15,18 +15,18 @@ A FastAPI-powered web app for UK National Rail and TfL (Tube/Overground/DLR) liv
 ## Screenshots
 
 ### Homepage
-![Leatherhead Live homepage](docs/images/homepage.png)
+![trains.mattdev.im homepage](docs/images/homepage.png)
 
 ### TfL Departures Board
-![Leatherhead Live TfL departures board](docs/images/board-departures.png)
+![trains.mattdev.im TfL departures board](docs/images/board-departures.png)
 
 ### TfL Service Detail
-![Leatherhead Live TfL service detail timeline](docs/images/service-detail.png)
+![trains.mattdev.im TfL service detail timeline](docs/images/service-detail.png)
 
 ## Project Structure
 
 ```text
-LeatherheadLive/
+trains.mattdev.im/
 ├── app/
 │   ├── main.py                    # FastAPI app setup, middleware, health
 │   ├── config.py                  # Settings and env/file key loading
