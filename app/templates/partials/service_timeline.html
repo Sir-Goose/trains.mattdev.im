@@ -8,7 +8,7 @@
     {% set stop_crs = (stop.crs or '')|trim|upper %}
     <div class="timeline-stop">
         <div class="timeline-marker">
-            <div class="marker-icon marker-route">○</div>
+            <div class="marker-icon marker-route"><span class="marker-inner" aria-hidden="true"></span></div>
             {% if ns.index < ns.total %}
             <div class="timeline-line"></div>
             {% endif %}
@@ -65,7 +65,7 @@
     {% set service_crs = (service.crs or '')|trim|upper %}
     <div class="timeline-stop">
         <div class="timeline-marker">
-            <div class="marker-icon marker-route">○</div>
+            <div class="marker-icon marker-route"><span class="marker-inner" aria-hidden="true"></span></div>
             {% if ns.index < ns.total %}
             <div class="timeline-line"></div>
             {% endif %}
@@ -122,7 +122,7 @@
     {% set stop_crs = (stop.crs or '')|trim|upper %}
     <div class="timeline-stop">
         <div class="timeline-marker">
-            <div class="marker-icon marker-route">○</div>
+            <div class="marker-icon marker-route"><span class="marker-inner" aria-hidden="true"></span></div>
             {% if ns.index < ns.total %}
             <div class="timeline-line"></div>
             {% endif %}

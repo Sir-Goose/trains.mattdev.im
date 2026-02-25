@@ -571,6 +571,7 @@ button:hover {
     display: flex;
     align-items: center;
     justify-content: center;
+    line-height: 1;
     font-size: 1rem;
     z-index: 2;
     background: var(--bg-secondary);
@@ -581,6 +582,14 @@ button:hover {
     background: var(--bg-secondary);
     border-color: var(--border);
     color: var(--text-secondary);
+}
+
+.marker-inner {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid currentColor;
+    display: block;
 }
 
 .timeline-line {
@@ -879,6 +888,11 @@ button:hover {
         width: 24px;
         height: 24px;
         font-size: 0.875rem;
+    }
+
+    .marker-inner {
+        width: 10px;
+        height: 10px;
     }
 
     .stop-name {
