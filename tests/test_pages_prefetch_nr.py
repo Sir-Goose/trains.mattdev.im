@@ -147,7 +147,7 @@ def test_nr_service_page_prefetches_clickable_boards(monkeypatch):
         subsequentCallingPoints=[{"callingPoint": [{"locationName": "Epsom", "crs": "EPS", "st": "12:20", "et": "On time"}]}],
     )
 
-    async def fake_get_service_route_following_cached(crs: str, service_id: str, use_cache: bool = True):
+    async def fake_get_service_route_cached(crs: str, service_id: str, use_cache: bool = True):
         return service
 
     calls: list[str] = []
@@ -156,8 +156,8 @@ def test_nr_service_page_prefetches_clickable_boards(monkeypatch):
         calls.append(crs)
 
     monkeypatch.setattr(
-        'app.routers.pages.rail_api_service.get_service_route_following_cached',
-        fake_get_service_route_following_cached,
+        'app.routers.pages.rail_api_service.get_service_route_cached',
+        fake_get_service_route_cached,
     )
     monkeypatch.setattr('app.routers.pages.prefetch_service.schedule_nr_board_prefetch', fake_schedule_nr_board_prefetch)
 
@@ -185,7 +185,7 @@ def test_nr_service_page_uses_timetable_fallback(monkeypatch):
         subsequentCallingPoints=[{"callingPoint": [{"locationName": "London Waterloo", "crs": "WAT", "st": "21:40", "et": "On time"}]}],
     )
 
-    async def fake_get_service_route_following_cached(crs: str, service_id: str, use_cache: bool = True):
+    async def fake_get_service_route_cached(crs: str, service_id: str, use_cache: bool = True):
         return None
 
     async def fake_get_service_route_from_timetable(crs: str, service_id: str):
@@ -194,8 +194,8 @@ def test_nr_service_page_uses_timetable_fallback(monkeypatch):
         return service
 
     monkeypatch.setattr(
-        'app.routers.pages.rail_api_service.get_service_route_following_cached',
-        fake_get_service_route_following_cached,
+        'app.routers.pages.rail_api_service.get_service_route_cached',
+        fake_get_service_route_cached,
     )
     monkeypatch.setattr(
         'app.routers.pages.rail_api_service.get_service_route_from_timetable',
@@ -228,15 +228,15 @@ def test_nr_service_refresh_uses_timetable_fallback(monkeypatch):
         subsequentCallingPoints=[{"callingPoint": [{"locationName": "London Waterloo", "crs": "WAT", "st": "21:40", "et": "On time"}]}],
     )
 
-    async def fake_get_service_route_following(crs: str, service_id: str, use_cache: bool = True):
+    async def fake_get_service_route(crs: str, service_id: str, use_cache: bool = True):
         return None
 
     async def fake_get_service_route_from_timetable(crs: str, service_id: str):
         return service
 
     monkeypatch.setattr(
-        'app.routers.pages.rail_api_service.get_service_route_following',
-        fake_get_service_route_following,
+        'app.routers.pages.rail_api_service.get_service_route',
+        fake_get_service_route,
     )
     monkeypatch.setattr(
         'app.routers.pages.rail_api_service.get_service_route_from_timetable',

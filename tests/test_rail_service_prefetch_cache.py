@@ -5,7 +5,7 @@ import pytest
 
 
 @pytest.mark.asyncio
-async def test_get_service_route_following_cached_reuses_cached_value(monkeypatch):
+async def test_get_service_route_cached_reuses_cached_value(monkeypatch):
     cache.clear()
     service = RailAPIService()
 
@@ -23,15 +23,15 @@ async def test_get_service_route_following_cached_reuses_cached_value(monkeypatc
 
     calls = 0
 
-    async def fake_get_service_route_following(*args, **kwargs):
+    async def fake_get_service_route(*args, **kwargs):
         nonlocal calls
         calls += 1
         return detail
 
-    monkeypatch.setattr(service, "get_service_route_following", fake_get_service_route_following)
+    monkeypatch.setattr(service, "get_service_route", fake_get_service_route)
 
-    first = await service.get_service_route_following_cached("LHD", "service-1", use_cache=True)
-    second = await service.get_service_route_following_cached("LHD", "service-1", use_cache=True)
+    first = await service.get_service_route_cached("LHD", "service-1", use_cache=True)
+    second = await service.get_service_route_cached("LHD", "service-1", use_cache=True)
 
     assert first is not None
     assert second is not None

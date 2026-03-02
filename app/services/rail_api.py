@@ -93,17 +93,6 @@ class RailAPIService:
             return None
         return crs
 
-    def _service_route_cache_key(self, service_id: str) -> str:
-        return f"service_route_candidates:{service_id}"
-
-    def _service_last_seen_cache_key(self, service_id: str) -> str:
-        return f"service_last_seen_crs:{service_id}"
-
-    def _service_tracking_ttl(self) -> int:
-        # Keep route tracking longer than board snapshots so users can follow
-        # services across many stations in one journey.
-        return max(self.cache_ttl * 6, 3600)
-
     def _service_detail_cache_key(self, service_id: str) -> str:
         return f"nr:service_detail:{service_id}"
 
@@ -111,7 +100,7 @@ class RailAPIService:
         return f"nr:service_hint:{service_id}"
 
     def _service_hint_ttl(self) -> int:
-        return max(self._service_tracking_ttl(), 12 * 3600)
+        return max(self.cache_ttl * 6, 12 * 3600)
 
     def _cache_board_service_hints(self, board: Board) -> None:
         ttl = self._service_hint_ttl()
@@ -160,52 +149,6 @@ class RailAPIService:
             service_type=cached.get("service_type"),
             generated_at=cached.get("generated_at"),
         )
-
-    def _build_service_crs_candidates(self, service: ServiceDetails) -> list[str]:
-        candidates: list[str] = []
-        seen: set[str] = set()
-
-        def add(crs_value: Optional[str]) -> None:
-            crs = self._normalize_crs(crs_value)
-            if crs and crs not in seen:
-                seen.add(crs)
-                candidates.append(crs)
-
-        for stop in service.all_previous_stops:
-            add(getattr(stop, "crs", None))
-        add(service.crs)
-        for stop in service.all_subsequent_stops:
-            add(getattr(stop, "crs", None))
-
-        return candidates
-
-    def _cache_service_tracking(self, service_id: str, service: ServiceDetails) -> None:
-        ttl = self._service_tracking_ttl()
-        candidates = self._build_service_crs_candidates(service)
-        if candidates:
-            cache.set(self._service_route_cache_key(service_id), candidates, ttl)
-        current_crs = self._normalize_crs(service.crs)
-        if current_crs:
-            cache.set(self._service_last_seen_cache_key(service_id), current_crs, ttl)
-
-    def _get_cached_service_route_candidates(self, service_id: str) -> list[str]:
-        cached = cache.get(self._service_route_cache_key(service_id))
-        if not isinstance(cached, list):
-            return []
-        candidates: list[str] = []
-        seen: set[str] = set()
-        for value in cached:
-            crs = self._normalize_crs(value if isinstance(value, str) else None)
-            if crs and crs not in seen:
-                seen.add(crs)
-                candidates.append(crs)
-        return candidates
-
-    def _get_cached_last_seen_crs(self, service_id: str) -> Optional[str]:
-        cached = cache.get(self._service_last_seen_cache_key(service_id))
-        if isinstance(cached, str):
-            return self._normalize_crs(cached)
-        return None
 
     def _extract_service_from_detailed_payload(
         self,
@@ -424,7 +367,6 @@ class RailAPIService:
         detailed_board = await self._get_detailed_board(crs_code, use_cache=use_cache)
         service = self._extract_service_from_detailed_payload(detailed_board.data, service_id)
         if service:
-            self._cache_service_tracking(service_id, service)
             return service
 
         # Avoid stale-negative misses where this station board was cached before
@@ -432,8 +374,6 @@ class RailAPIService:
         if use_cache and detailed_board.from_cache:
             fresh_board = await self._get_detailed_board(crs_code, use_cache=False)
             service = self._extract_service_from_detailed_payload(fresh_board.data, service_id)
-            if service:
-                self._cache_service_tracking(service_id, service)
             return service
 
         return None
@@ -445,40 +385,9 @@ class RailAPIService:
         use_cache: bool = True,
         max_stations_to_check: int = 10,
     ) -> Optional[ServiceDetails]:
-        """
-        Get service details, following the train along known calling points when it
-        drops off the current station's board.
-        """
-        requested_crs = crs_code.upper()
-        candidate_stations: list[str] = []
-        seen: set[str] = set()
-
-        def add_candidate(candidate: Optional[str]) -> None:
-            crs = self._normalize_crs(candidate)
-            if crs and crs not in seen:
-                seen.add(crs)
-                candidate_stations.append(crs)
-
-        # Prioritize the best likely station first.
-        add_candidate(self._get_cached_last_seen_crs(service_id))
-        add_candidate(requested_crs)
-        for candidate in self._get_cached_service_route_candidates(service_id):
-            add_candidate(candidate)
-
-        if not candidate_stations:
-            return None
-
-        for station_crs in candidate_stations[:max_stations_to_check]:
-            service = await self.get_service_route(
-                station_crs,
-                service_id,
-                use_cache=use_cache,
-            )
-            if service:
-                self._cache_service_tracking(service_id, service)
-                return service
-
-        return None
+        # Route look-ahead has been removed: only query the requested CRS.
+        _ = max_stations_to_check
+        return await self.get_service_route(crs_code, service_id, use_cache=use_cache)
 
     async def get_service_route_following_cached(
         self,
@@ -487,28 +396,8 @@ class RailAPIService:
         use_cache: bool = True,
         max_stations_to_check: int = 10,
     ) -> Optional[ServiceDetails]:
-        cache_key = self._service_detail_cache_key(service_id)
-        if use_cache:
-            cached = cache.get(cache_key)
-            if isinstance(cached, dict):
-                try:
-                    return ServiceDetails(**cached)
-                except Exception:
-                    pass
-
-        service = await self.get_service_route_following(
-            crs_code=crs_code,
-            service_id=service_id,
-            use_cache=use_cache,
-            max_stations_to_check=max_stations_to_check,
-        )
-        if service:
-            cache.set(
-                cache_key,
-                service.model_dump(mode="json", by_alias=True),
-                settings.service_prefetch_ttl_seconds,
-            )
-        return service
+        _ = max_stations_to_check
+        return await self.get_service_route_cached(crs_code, service_id, use_cache=use_cache)
 
     async def get_service_route_from_timetable(
         self,
@@ -539,8 +428,6 @@ class RailAPIService:
                 requested_crs,
             )
             return None
-        if service:
-            self._cache_service_tracking(service_id, service)
         return service
 
     async def get_service_route_cached(

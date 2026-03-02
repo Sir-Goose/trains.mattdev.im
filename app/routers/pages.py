@@ -226,7 +226,7 @@ async def board_search(crs: str, view: Optional[str] = "departures"):
 @router.get("/service/{crs}/{service_id}", response_class=HTMLResponse)
 async def service_detail_page(request: Request, crs: str, service_id: str):
     crs = validate_crs(crs)
-    service = await rail_api_service.get_service_route_following_cached(crs, service_id, use_cache=True)
+    service = await rail_api_service.get_service_route_cached(crs, service_id, use_cache=True)
     if not service:
         service = await rail_api_service.get_service_route_from_timetable(crs, service_id)
 
@@ -248,7 +248,7 @@ async def service_detail_page(request: Request, crs: str, service_id: str):
 @router.get("/service/{crs}/{service_id}/refresh", response_class=HTMLResponse)
 async def service_detail_refresh(request: Request, crs: str, service_id: str):
     crs = validate_crs(crs)
-    service = await rail_api_service.get_service_route_following(crs, service_id, use_cache=False)
+    service = await rail_api_service.get_service_route(crs, service_id, use_cache=False)
     if not service:
         service = await rail_api_service.get_service_route_from_timetable(crs, service_id)
 
