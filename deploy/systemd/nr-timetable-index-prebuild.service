@@ -1,0 +1,18 @@
+[Unit]
+Description=trains.mattdev.im NR timetable index prebuild
+After=network.target
+Wants=network.target
+ConditionPathExists=/srv/sftp/nre_sftp/incoming/timetable_full.zip
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+WorkingDirectory=/root/LeatherheadLive
+Environment=PYTHONUNBUFFERED=1
+Environment=NR_TIMETABLE_ENABLED=true
+ExecStart=/usr/bin/flock -n /tmp/nr-timetable-index-prebuild.lock /root/LeatherheadLive/venv/bin/python -m app.tools.build_nr_timetable_index
+TimeoutStartSec=30min
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7

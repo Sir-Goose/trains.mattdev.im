@@ -1,0 +1,10 @@
+[Unit]
+Description=Run NR timetable index prebuild when timetable ZIP updates
+
+[Path]
+PathExists=/srv/sftp/nre_sftp/incoming/timetable_full.zip
+PathChanged=/srv/sftp/nre_sftp/incoming/timetable_full.zip
+Unit=nr-timetable-index-prebuild.service
+
+[Install]
+WantedBy=multi-user.target

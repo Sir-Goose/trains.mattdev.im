@@ -104,6 +104,18 @@ trains.mattdev.im/
    ```
    This precomputes the SQLite index used by NR timetable fallback lookups.
 
+6. (Production, optional) Install systemd automation for NR timetable prebuilds:
+   ```bash
+   sudo cp deploy/systemd/nr-timetable-index-prebuild.{service,path,timer} /etc/systemd/system/
+   sudo systemctl daemon-reload
+   sudo systemctl enable --now nr-timetable-index-prebuild.path
+   sudo systemctl enable --now nr-timetable-index-prebuild.timer
+   ```
+   - `nr-timetable-index-prebuild.path` runs prebuild whenever
+     `/srv/sftp/nre_sftp/incoming/timetable_full.zip` changes.
+   - `nr-timetable-index-prebuild.timer` is a daily fallback run at `03:30`
+     (server local time) in case a filesystem event is missed.
+
 ## Running the Server
 
 ```bash
