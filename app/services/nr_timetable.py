@@ -7,7 +7,7 @@ import fcntl
 import os
 from pathlib import Path
 import sqlite3
-from threading import RLock
+from threading import RLock, Thread
 import zipfile
 
 from app.config import settings
@@ -87,6 +87,8 @@ class NRTimetableService:
         self._msn_member: str | None = None
         self._mca_plain_path: Path | None = None
         self._index_db_path: Path | None = None
+        self._index_build_thread: Thread | None = None
+        self._index_build_signature: tuple[str, int, int] | None = None
         self._tiploc_to_crs: dict[str, str] = {}
         self._tiploc_to_name: dict[str, str] = {}
         self._station_cache: dict[tuple[tuple[str, int, int], str, str], list[TimetableSchedule]] = {}
@@ -177,6 +179,9 @@ class NRTimetableService:
             self._msn_member = None
             self._mca_plain_path = None
             self._index_db_path = None
+            self._index_build_signature = None
+            if self._index_build_thread and not self._index_build_thread.is_alive():
+                self._index_build_thread = None
             self._tiploc_to_crs.clear()
             self._tiploc_to_name.clear()
             self._station_cache.clear()
@@ -249,7 +254,18 @@ class NRTimetableService:
             return []
         schedules: list[TimetableSchedule] = []
 
-        index_path = self._ensure_sqlite_index(signature, mca_plain_path)
+        # Build index synchronously for small fixtures/dev; for production-size
+        # files trigger background build so first user request is not blocked.
+        try:
+            mca_size = mca_plain_path.stat().st_size
+        except OSError:
+            mca_size = 0
+        wait_for_index = mca_size < 100_000_000
+        index_path = self._ensure_sqlite_index(
+            signature=signature,
+            mca_plain_path=mca_plain_path,
+            wait=wait_for_index,
+        )
         if index_path:
             try:
                 schedules = self._load_station_schedules_from_index(
@@ -395,15 +411,56 @@ class NRTimetableService:
         self,
         signature: tuple[str, int, int],
         mca_plain_path: Path,
+        wait: bool,
     ) -> Path | None:
         if self._index_db_path and self._index_db_path.exists():
             return self._index_db_path
 
         filename = f"nr_timetable.{signature[1]}.{signature[2]}.sqlite3"
         target = self.work_dir / filename
-        lock_path = self.work_dir / "nr_timetable_index.lock"
         self.work_dir.mkdir(parents=True, exist_ok=True)
+        if target.exists() and target.stat().st_size > 0:
+            self._index_db_path = target
+            return target
 
+        if wait:
+            return self._build_sqlite_index_with_lock(signature, mca_plain_path, target)
+
+        self._start_background_index_build(signature, mca_plain_path, target)
+        return None
+
+    def _start_background_index_build(
+        self,
+        signature: tuple[str, int, int],
+        mca_plain_path: Path,
+        target: Path,
+    ) -> None:
+        if self._index_build_thread and self._index_build_thread.is_alive():
+            if self._index_build_signature == signature:
+                return
+
+        self._index_build_signature = signature
+
+        def worker() -> None:
+            try:
+                self._build_sqlite_index_with_lock(signature, mca_plain_path, target)
+            except Exception:
+                logger.exception("Background NR timetable index build failed")
+
+        self._index_build_thread = Thread(
+            target=worker,
+            name="nr-timetable-index-build",
+            daemon=True,
+        )
+        self._index_build_thread.start()
+
+    def _build_sqlite_index_with_lock(
+        self,
+        signature: tuple[str, int, int],
+        mca_plain_path: Path,
+        target: Path,
+    ) -> Path | None:
+        lock_path = self.work_dir / "nr_timetable_index.lock"
         with lock_path.open("a+") as lock_file:
             fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
             try:
@@ -411,6 +468,7 @@ class NRTimetableService:
                     self._index_db_path = target
                     return target
 
+                filename = target.name
                 temp_path = self.work_dir / f".{filename}.{os.getpid()}.tmp"
                 if temp_path.exists():
                     temp_path.unlink(missing_ok=True)
@@ -419,6 +477,7 @@ class NRTimetableService:
                 self._build_sqlite_index(temp_path, mca_plain_path)
                 os.replace(temp_path, target)
                 self._index_db_path = target
+                self._index_build_signature = signature
                 self._cleanup_old_sqlite_indexes(exclude=target)
                 return target
             except Exception:
