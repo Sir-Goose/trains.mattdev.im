@@ -92,3 +92,21 @@ async def test_get_service_route_from_timetable_uses_cached_hint(monkeypatch):
     assert captured["hint"].origin_crs == "GLD"
     assert captured["hint"].destination_crs == "WAT"
     assert captured["hint"].operator_code == "SW"
+
+
+@pytest.mark.asyncio
+async def test_get_service_route_from_timetable_caches_service_detail(monkeypatch):
+    cache.clear()
+    service = RailAPIService()
+
+    def fake_find_service_detail(service_id: str, requested_crs: str, hint):
+        return _sample_service_detail()
+
+    monkeypatch.setattr("app.services.rail_api.nr_timetable_service.find_service_detail", fake_find_service_detail)
+
+    detail = await service.get_service_route_from_timetable("LHD", "service-1")
+
+    assert detail is not None
+    cached = cache.get(service._service_detail_cache_key("service-1"))
+    assert isinstance(cached, dict)
+    assert cached.get("serviceID") == "service-1"

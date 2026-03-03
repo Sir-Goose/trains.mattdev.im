@@ -92,8 +92,8 @@ class NRTimetableService:
         self._index_build_signature: tuple[str, int, int] | None = None
         self._tiploc_to_crs: dict[str, str] = {}
         self._tiploc_to_name: dict[str, str] = {}
-        self._station_cache: dict[tuple[tuple[str, int, int], str, str], list[TimetableSchedule]] = {}
-        self._station_cache_order: list[tuple[tuple[str, int, int], str, str]] = []
+        self._station_cache: dict[tuple[tuple[str, int, int], str, str, str], list[TimetableSchedule]] = {}
+        self._station_cache_order: list[tuple[tuple[str, int, int], str, str, str]] = []
         self._station_cache_max_entries = 8
         self._lock = RLock()
 
@@ -121,7 +121,13 @@ class NRTimetableService:
                 hint.crs = requested
 
             service_date = self._resolve_service_date(hint.generated_at)
-            schedules = self._load_station_schedules(signature, requested, service_date)
+            uid_hint = self._uid_hint_from_service_id(service_id)
+            schedules = self._load_station_schedules(
+                signature,
+                requested,
+                service_date,
+                uid_hint=uid_hint,
+            )
             if not schedules:
                 return None
 
@@ -311,8 +317,10 @@ class NRTimetableService:
         signature: tuple[str, int, int],
         station_crs: str,
         service_date: date,
+        uid_hint: str | None = None,
     ) -> list[TimetableSchedule]:
-        key = (signature, station_crs, service_date.isoformat())
+        cache_uid = uid_hint or "*"
+        key = (signature, station_crs, service_date.isoformat(), cache_uid)
         cached = self._station_cache.get(key)
         if cached is not None:
             return cached
@@ -341,11 +349,19 @@ class NRTimetableService:
         )
         if index_path:
             try:
-                schedules = self._load_station_schedules_from_index(
-                    index_path=index_path,
-                    station_crs=station_crs,
-                    service_date=service_date,
-                )
+                if uid_hint:
+                    schedules = self._load_station_schedules_from_index_for_uid(
+                        index_path=index_path,
+                        station_crs=station_crs,
+                        service_date=service_date,
+                        uid_hint=uid_hint,
+                    )
+                if not schedules:
+                    schedules = self._load_station_schedules_from_index(
+                        index_path=index_path,
+                        station_crs=station_crs,
+                        service_date=service_date,
+                    )
             except Exception:
                 logger.exception("Failed loading station schedules from SQLite index")
                 schedules = []
@@ -355,6 +371,7 @@ class NRTimetableService:
                 mca_plain_path=mca_plain_path,
                 station_crs=station_crs,
                 service_date=service_date,
+                uid_hint=uid_hint,
             )
 
         self._remember_station_cache(key, schedules)
@@ -365,6 +382,7 @@ class NRTimetableService:
         mca_plain_path: Path,
         station_crs: str,
         service_date: date,
+        uid_hint: str | None = None,
     ) -> list[TimetableSchedule]:
         schedules: list[TimetableSchedule] = []
         current: TimetableSchedule | None = None
@@ -406,6 +424,9 @@ class NRTimetableService:
                 if record_type == "BS":
                     finalize_schedule()
                     current, current_active = self._parse_bs_record(line, service_date)
+                    if current and uid_hint and current.train_uid != uid_hint:
+                        current = None
+                        current_active = False
                     continue
 
                 if current is None:
@@ -766,6 +787,60 @@ class NRTimetableService:
         finally:
             conn.close()
 
+        return self._rows_to_schedules(rows, service_date)
+
+    def _load_station_schedules_from_index_for_uid(
+        self,
+        index_path: Path,
+        station_crs: str,
+        service_date: date,
+        uid_hint: str,
+    ) -> list[TimetableSchedule]:
+        conn = sqlite3.connect(index_path)
+        try:
+            rows = conn.execute(
+                """
+                SELECT
+                    s.schedule_id,
+                    s.train_uid,
+                    s.operator_code,
+                    s.service_type,
+                    s.start_date,
+                    s.end_date,
+                    s.days_run,
+                    s.stp_indicator,
+                    t.stop_seq,
+                    t.tiploc,
+                    t.crs,
+                    t.location_name,
+                    t.working_arrival,
+                    t.working_departure,
+                    t.public_arrival,
+                    t.public_departure,
+                    t.platform
+                FROM schedules s
+                JOIN stops t ON t.schedule_id = s.schedule_id
+                WHERE s.train_uid = ?
+                  AND EXISTS (
+                      SELECT 1
+                      FROM stops station_stop
+                      WHERE station_stop.schedule_id = s.schedule_id
+                        AND station_stop.crs = ?
+                  )
+                ORDER BY s.schedule_id, t.stop_seq
+                """,
+                (uid_hint, station_crs),
+            ).fetchall()
+        finally:
+            conn.close()
+
+        return self._rows_to_schedules(rows, service_date)
+
+    def _rows_to_schedules(
+        self,
+        rows: list[tuple],
+        service_date: date,
+    ) -> list[TimetableSchedule]:
         schedules: list[TimetableSchedule] = []
         current_schedule_id: int | None = None
         current_schedule: TimetableSchedule | None = None
@@ -830,7 +905,7 @@ class NRTimetableService:
 
     def _remember_station_cache(
         self,
-        key: tuple[tuple[str, int, int], str, str],
+        key: tuple[tuple[str, int, int], str, str, str],
         schedules: list[TimetableSchedule],
     ) -> None:
         self._station_cache[key] = schedules
@@ -1202,6 +1277,15 @@ class NRTimetableService:
         if len(crs) != 3 or not crs.isalpha():
             return None
         return crs
+
+    @staticmethod
+    def _uid_hint_from_service_id(service_id: str | None) -> str | None:
+        if not service_id:
+            return None
+        uid = service_id.strip().upper()[:6]
+        if len(uid) != 6 or not uid.isalnum():
+            return None
+        return uid
 
     @staticmethod
     def _to_minutes(value: str | None) -> int | None:

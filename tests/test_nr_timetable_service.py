@@ -176,3 +176,97 @@ def test_prebuild_index_returns_ready_metadata(tmp_path):
     assert result["msn_member"] == "TESTMSN.TXT"
     assert int(result["tiploc_count"]) >= 5
     assert Path(str(result["index_path"])).exists()
+
+
+def test_timetable_service_uses_uid_index_fast_path_when_uid_matches(monkeypatch, tmp_path):
+    zip_path = tmp_path / "timetable_full.zip"
+    work_dir = tmp_path / "work"
+    _write_fixture_zip(zip_path)
+    service = NRTimetableService(zip_path=str(zip_path), enabled=True, work_dir=str(work_dir))
+    service.prebuild_index()
+
+    uid_calls = 0
+    broad_calls = 0
+
+    original_uid_loader = service._load_station_schedules_from_index_for_uid
+
+    def spy_uid_loader(index_path, station_crs, service_date, uid_hint):
+        nonlocal uid_calls
+        uid_calls += 1
+        return original_uid_loader(index_path, station_crs, service_date, uid_hint)
+
+    def spy_broad_loader(index_path, station_crs, service_date):
+        nonlocal broad_calls
+        broad_calls += 1
+        return []
+
+    monkeypatch.setattr(service, "_load_station_schedules_from_index_for_uid", spy_uid_loader)
+    monkeypatch.setattr(service, "_load_station_schedules_from_index", spy_broad_loader)
+
+    detail = service.find_service_detail(
+        service_id="TRN001LETHRHD_",
+        requested_crs="LHD",
+        hint=ServiceLookupHint(
+            crs="LHD",
+            scheduled_arrival_time="21:10",
+            scheduled_departure_time="21:10",
+            origin_crs="GLD",
+            destination_crs="WAT",
+            operator_code="SW",
+            operator_name="South Western Railway",
+            generated_at="2026-03-02T20:30:00+00:00",
+            service_type="train",
+        ),
+    )
+
+    assert detail is not None
+    assert detail.operatorCode == "SW"
+    assert uid_calls >= 1
+    assert broad_calls == 0
+
+
+def test_timetable_service_falls_back_to_broad_lookup_when_uid_has_no_match(monkeypatch, tmp_path):
+    zip_path = tmp_path / "timetable_full.zip"
+    work_dir = tmp_path / "work"
+    _write_fixture_zip(zip_path)
+    service = NRTimetableService(zip_path=str(zip_path), enabled=True, work_dir=str(work_dir))
+    service.prebuild_index()
+
+    uid_calls = 0
+    broad_calls = 0
+
+    original_uid_loader = service._load_station_schedules_from_index_for_uid
+    original_broad_loader = service._load_station_schedules_from_index
+
+    def spy_uid_loader(index_path, station_crs, service_date, uid_hint):
+        nonlocal uid_calls
+        uid_calls += 1
+        return original_uid_loader(index_path, station_crs, service_date, uid_hint)
+
+    def spy_broad_loader(index_path, station_crs, service_date):
+        nonlocal broad_calls
+        broad_calls += 1
+        return original_broad_loader(index_path, station_crs, service_date)
+
+    monkeypatch.setattr(service, "_load_station_schedules_from_index_for_uid", spy_uid_loader)
+    monkeypatch.setattr(service, "_load_station_schedules_from_index", spy_broad_loader)
+
+    detail = service.find_service_detail(
+        service_id="ZZZ999LETHRHD_",
+        requested_crs="LHD",
+        hint=ServiceLookupHint(
+            crs="LHD",
+            scheduled_arrival_time="21:10",
+            scheduled_departure_time="21:10",
+            origin_crs="GLD",
+            destination_crs="WAT",
+            operator_code="SW",
+            operator_name="South Western Railway",
+            generated_at="2026-03-02T20:30:00+00:00",
+            service_type="train",
+        ),
+    )
+
+    assert detail is not None
+    assert uid_calls >= 1
+    assert broad_calls >= 1
