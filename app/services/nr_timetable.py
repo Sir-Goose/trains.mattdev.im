@@ -732,6 +732,8 @@ class NRTimetableService:
         station_crs: str,
         service_date: date,
     ) -> list[TimetableSchedule]:
+        service_date_iso = service_date.isoformat()
+        weekday_pos = service_date.weekday() + 1
         conn = sqlite3.connect(index_path)
         try:
             rows = conn.execute(
@@ -759,9 +761,12 @@ class NRTimetableService:
                 WHERE s.schedule_id IN (
                     SELECT DISTINCT schedule_id FROM stops WHERE crs = ?
                 )
+                  AND (s.start_date IS NULL OR s.start_date <= ?)
+                  AND (s.end_date IS NULL OR s.end_date >= ?)
+                  AND (length(s.days_run) != 7 OR substr(s.days_run, ?, 1) = '1')
                 ORDER BY s.schedule_id, t.stop_seq
                 """,
-                (station_crs,),
+                (station_crs, service_date_iso, service_date_iso, weekday_pos),
             ).fetchall()
         finally:
             conn.close()
