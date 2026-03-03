@@ -5,6 +5,7 @@ import logging
 from typing import Any
 
 from app.config import settings
+from app.middleware.cache import cache
 from app.services.rail_api import rail_api_service
 from app.services.tfl_api import TflAPIError, TflBoardNotFoundError, tfl_api_service
 
@@ -45,11 +46,26 @@ class PrefetchCoordinator:
         self._emit(f"queued {job_key}")
 
         async def _runner() -> None:
-            await rail_api_service.get_service_route_cached(
+            service = await rail_api_service.get_service_route_cached(
                 crs_code=crs,
                 service_id=service_id,
                 use_cache=True,
             )
+            if service:
+                logger.debug("NR service prefetch %s resolved via board API/cache", job_key)
+                return
+
+            service = await rail_api_service.get_service_route_from_timetable(crs, service_id)
+            if not service:
+                logger.debug("NR service prefetch %s unresolved after timetable fallback", job_key)
+                return
+
+            cache.set(
+                rail_api_service._service_detail_cache_key(service_id),
+                service.model_dump(mode="json", by_alias=True),
+                settings.service_prefetch_ttl_seconds,
+            )
+            logger.debug("NR service prefetch %s resolved via timetable fallback", job_key)
 
         asyncio.create_task(self._run_job(job_key, _runner))
 
