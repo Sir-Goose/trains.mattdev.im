@@ -428,12 +428,6 @@ class RailAPIService:
                 requested_crs,
             )
             return None
-        if service:
-            cache.set(
-                self._service_detail_cache_key(service_id),
-                service.model_dump(mode="json", by_alias=True),
-                settings.service_prefetch_ttl_seconds,
-            )
         return service
 
     async def get_service_route_cached(
