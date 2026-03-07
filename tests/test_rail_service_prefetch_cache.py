@@ -1,6 +1,7 @@
 from app.middleware.cache import cache
 from app.models.board import ServiceDetails
 from app.services.rail_api import RailAPIService
+from app.config import settings
 import pytest
 
 
@@ -28,7 +29,15 @@ async def test_get_service_route_cached_reuses_cached_value(monkeypatch):
         calls += 1
         return detail
 
+    set_calls: list[tuple[str, int]] = []
+    original_set = cache.set
+
+    def tracking_set(key, value, ttl=None):
+        set_calls.append((key, ttl))
+        return original_set(key, value, ttl)
+
     monkeypatch.setattr(service, "get_service_route", fake_get_service_route)
+    monkeypatch.setattr(cache, "set", tracking_set)
 
     first = await service.get_service_route_cached("LHD", "service-1", use_cache=True)
     second = await service.get_service_route_cached("LHD", "service-1", use_cache=True)
@@ -36,3 +45,4 @@ async def test_get_service_route_cached_reuses_cached_value(monkeypatch):
     assert first is not None
     assert second is not None
     assert calls == 1
+    assert set_calls[-1] == (service._service_detail_cache_key("service-1"), settings.service_prefetch_ttl_seconds)

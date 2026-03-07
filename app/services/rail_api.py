@@ -441,7 +441,13 @@ class RailAPIService:
             cached = cache.get(cache_key)
             if isinstance(cached, dict):
                 try:
-                    return ServiceDetails(**cached)
+                    service = ServiceDetails(**cached)
+                    cache.set(
+                        cache_key,
+                        service.model_dump(mode="json", by_alias=True),
+                        settings.service_prefetch_ttl_seconds,
+                    )
+                    return service
                 except Exception:
                     pass
 

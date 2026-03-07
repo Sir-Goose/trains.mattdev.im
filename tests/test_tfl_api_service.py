@@ -2,6 +2,7 @@ from app.middleware.cache import cache
 from app.models.tfl import TflPrediction
 from app.models.tfl_service import TflServiceDetail
 from app.services.tfl_api import TflAPIError, TflAPIService
+from app.config import settings
 import pytest
 
 
@@ -326,7 +327,15 @@ async def test_get_service_route_detail_cached_reuses_cached_value(monkeypatch):
         calls += 1
         return detail
 
+    set_calls: list[tuple[str, int]] = []
+    original_set = cache.set
+
+    def tracking_set(key, value, ttl=None):
+        set_calls.append((key, ttl))
+        return original_set(key, value, ttl)
+
     monkeypatch.setattr(service, "get_service_route_detail", fake_get_service_route_detail)
+    monkeypatch.setattr(cache, "set", tracking_set)
 
     first = await service.get_service_route_detail_cached(
         line_id="victoria",
@@ -348,3 +357,4 @@ async def test_get_service_route_detail_cached_reuses_cached_value(monkeypatch):
     assert first.line_id == "victoria"
     assert second.line_id == "victoria"
     assert calls == 1
+    assert set_calls[-1][1] == settings.service_prefetch_ttl_seconds

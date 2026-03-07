@@ -6,6 +6,7 @@ from app.config import settings
 from app.middleware.cache import cache
 from app.models.board import ServiceDetails
 from app.services.rail_api import rail_api_service
+from app.services.tfl_api import tfl_api_service
 from app.services.prefetch import PrefetchCoordinator
 
 
@@ -125,6 +126,45 @@ async def test_nr_service_prefetch_board_hit_skips_timetable_fallback(monkeypatc
 
 
 @pytest.mark.asyncio
+async def test_nr_service_prefetch_cache_hit_refreshes_service_ttl(monkeypatch):
+    old_enabled = settings.prefetch_enabled
+    settings.prefetch_enabled = True
+    coordinator = PrefetchCoordinator()
+    service_id = "service-cache-hit-touch"
+    cache_key = rail_api_service._service_detail_cache_key(service_id)
+    detail = _sample_service_detail(service_id=service_id, crs="LHD")
+    cache.set(cache_key, detail.model_dump(mode="json", by_alias=True), settings.service_prefetch_ttl_seconds)
+
+    set_calls: list[tuple[str, int | None]] = []
+    original_set = cache.set
+    timetable_calls = 0
+
+    def tracking_set(key, value, ttl=None):
+        set_calls.append((key, ttl))
+        return original_set(key, value, ttl)
+
+    async def fake_get_service_route_from_timetable(crs_code: str, service_id: str):
+        nonlocal timetable_calls
+        timetable_calls += 1
+        return None
+
+    monkeypatch.setattr(cache, "set", tracking_set)
+    monkeypatch.setattr(
+        "app.services.prefetch.rail_api_service.get_service_route_from_timetable",
+        fake_get_service_route_from_timetable,
+    )
+
+    try:
+        coordinator.schedule_nr_service_prefetch("LHD", service_id)
+        await asyncio.sleep(0.1)
+    finally:
+        settings.prefetch_enabled = old_enabled
+
+    assert timetable_calls == 0
+    assert (cache_key, settings.service_prefetch_ttl_seconds) in set_calls
+
+
+@pytest.mark.asyncio
 async def test_nr_service_prefetch_board_miss_timetable_hit_warms_service_cache(monkeypatch):
     old_enabled = settings.prefetch_enabled
     settings.prefetch_enabled = True
@@ -208,6 +248,66 @@ async def test_nr_service_prefetch_board_miss_timetable_miss_does_not_cache(monk
     assert board_calls == 1
     assert timetable_calls == 1
     assert cache.get(cache_key) is None
+
+
+@pytest.mark.asyncio
+async def test_tfl_service_prefetch_cache_hit_refreshes_service_ttl(monkeypatch):
+    old_enabled = settings.prefetch_enabled
+    settings.prefetch_enabled = True
+    coordinator = PrefetchCoordinator()
+    params = {
+        "line_id": "victoria",
+        "from_stop_id": "940GZZLUGPK",
+        "to_stop_id": "940GZZLUBXN",
+        "direction": "inbound",
+        "trip_id": "trip-1",
+    }
+    cache_key = tfl_api_service._service_detail_cache_key(**params)
+    cache.set(
+        cache_key,
+        {
+            "line_id": "victoria",
+            "line_name": "Victoria",
+            "direction": "inbound",
+            "from_stop_id": "940GZZLUGPK",
+            "to_stop_id": "940GZZLUBXN",
+            "origin_name": "Green Park Underground Station",
+            "destination_name": "Brixton Underground Station",
+            "resolution_mode": "exact",
+            "mode_name": "tube",
+            "pulledAt": "2026-01-01T12:00:00+00:00",
+            "stops": [],
+        },
+        settings.service_prefetch_ttl_seconds,
+    )
+
+    set_calls: list[tuple[str, int | None]] = []
+    original_set = cache.set
+    detail_fetch_calls = 0
+
+    def tracking_set(key, value, ttl=None):
+        set_calls.append((key, ttl))
+        return original_set(key, value, ttl)
+
+    async def fake_get_service_route_detail(**kwargs):
+        nonlocal detail_fetch_calls
+        detail_fetch_calls += 1
+        raise AssertionError("get_service_route_detail should not be called on a warm cache hit")
+
+    monkeypatch.setattr(cache, "set", tracking_set)
+    monkeypatch.setattr(
+        "app.services.prefetch.tfl_api_service.get_service_route_detail",
+        fake_get_service_route_detail,
+    )
+
+    try:
+        coordinator.schedule_tfl_service_prefetch(params)
+        await asyncio.sleep(0.1)
+    finally:
+        settings.prefetch_enabled = old_enabled
+
+    assert detail_fetch_calls == 0
+    assert (cache_key, settings.service_prefetch_ttl_seconds) in set_calls
 
 
 @pytest.mark.asyncio
