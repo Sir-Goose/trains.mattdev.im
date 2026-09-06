@@ -1,0 +1,42 @@
+# trains.mattdev.im on empoleon swarm
+# Deploy with: docker stack deploy -c stack.yml trains
+#
+# Secrets must exist first (values live only on empoleon, never in git):
+#   docker secret create trains_rail_key /mnt/bulk/secrets/trains_rail_key
+#   docker secret create trains_tfl_key /mnt/bulk/secrets/trains_tfl_key
+#
+# Service DNS inside the `public` overlay is `trains_app` (stack_service),
+# so the Cloudflare tunnel ingress for trains.mattdev.im is:
+#   http://trains_app:8000
+services:
+  app:
+    image: ${TRAINS_IMAGE:-empoleon.tail1606c.ts.net:8443/trains:latest}
+    environment:
+      NR_TIMETABLE_ENABLED: "false"
+    secrets:
+      - trains_rail_key
+      - trains_tfl_key
+    networks:
+      - public
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: any
+      update_config:
+        order: stop-first
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+networks:
+  public:
+    external: true
+
+secrets:
+  trains_rail_key:
+    external: true
+  trains_tfl_key:
+    external: true
